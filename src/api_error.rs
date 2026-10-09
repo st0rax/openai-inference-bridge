@@ -34,7 +34,7 @@ impl ApiError {
         let (status, error_type, code) = match error.kind {
             BackendErrorKind::LoginRequired => {
                 (401, "authentication_error", "provider_login_required")
-            },
+            }
             BackendErrorKind::Challenge => (503, "server_error", "provider_challenge_required"),
             BackendErrorKind::RateLimited => (429, "rate_limit_error", "provider_rate_limited"),
             BackendErrorKind::Timeout => (504, "timeout_error", "brain_timeout"),
@@ -42,11 +42,11 @@ impl ApiError {
             BackendErrorKind::BrowserUnavailable => (503, "server_error", "brain_unavailable"),
             BackendErrorKind::NavigationFailed => {
                 (502, "server_error", "browser_navigation_failed")
-            },
+            }
             BackendErrorKind::SubmissionFailed => (502, "server_error", "brain_submission_failed"),
             BackendErrorKind::ResponseNotDetected => {
                 (502, "server_error", "brain_response_not_detected")
-            },
+            }
             BackendErrorKind::ExtractionFailed => (502, "server_error", "brain_extraction_failed"),
             BackendErrorKind::UnsupportedCapability => {
                 (400, "invalid_request_error", "unsupported_capability")

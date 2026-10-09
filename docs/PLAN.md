@@ -9,8 +9,8 @@ The web UI is a thin local control/test surface over the same registry and infer
 ## Milestones
 
 - **Phase P1 — Foundation:** repository structure, scope, license policy, CI and safe defaults.
-- **Phase P2 — Upstream audit:** inspect the existing `webagent-rs` API bridge and Brain abstraction; establish a file-by-file reuse decision. **Source-level audit complete.**
-- **Phase P3 — Architecture/API core:** freeze internal contracts and implement HTTP/auth/model discovery/chat completions/streaming.
+- **Phase P2 — Upstream audit and component evaluation:** source-level discovery audits are complete; individual component approvals remain outstanding. The earlier public-API-bridge recommendation is superseded.
+- **Phase P3 — Independent architecture/API core:** define our own BrainBackend contract, then implement HTTP/auth/model discovery/chat completions/streaming.
 - **Phase P4 — Brain runtime and compatibility:** connect a browser-chat Brain, then verify clients and protocol behavior.
 - **Phase P5 — UI and hardening:** local chat diagnostics, security, privacy, observability and failure tests.
 - **Phase P6 — Release:** setup guide, support matrix, reproducible package and clean-checkout acceptance.
@@ -30,8 +30,8 @@ Task dependencies are authoritative in `docs/TASKBOARD.json`.
 ## Status handover — 2026-10-09
 
 - **Done:** repository bootstrap and planning; source-level audits for API bridge modules, Brain lifecycle, inference/streaming, Chat Completions, Responses API, media capabilities, and the file-level reuse decision; integration strategy and acceptance gates.
-- **Recommendation:** use a pinned `webagent-rs` library dependency and validate it in a clean build spike. Do not copy `api_bridge` or `brain.rs` in isolation because they depend on the upstream runtime/config/profile/session stack.
-- **Next:** set up the Rust workspace and CI (`P-004`), then prove the pinned dependency builds and can serve a buffered and streaming text request.
+- **Binding decision:** implement the OpenAI-compatible API and internal Brain contract in this repository. Do not use WebAgent's public API bridge as the core. Evaluate every candidate upstream component individually before any reuse or dependency adoption.
+- **Next:** document and perform component-by-component evaluation before runtime implementation; in parallel, independent workspace/API foundation work may proceed where dependencies permit.
 - **Not verified:** no clean Cargo build, upstream tests, live browser turn, or client compatibility test has been run from this new repository.
 
 See [the detailed status handover](STATUS_2026-10-09.md) and the audit reports linked there.

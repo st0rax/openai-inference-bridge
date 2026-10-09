@@ -2,8 +2,8 @@
   "project": "openai-inference-bridge",
   "created": "2026-10-09",
   "owner": "st0rax",
-  "task_count": 52,
-  "note": "Dependencies are hard DAG edges: a task remains blocked until every dependency is done. Claim a task before editing; mark done only with verification evidence.",
+  "task_count": 53,
+  "note": "Dependencies are hard DAG edges: a task remains blocked until every dependency is done. Claim a task before editing; mark done only with verification evidence. Upstream components require individual evaluation approval before any reuse or dependency adoption.",
   "verification": [
     "cargo fmt --all -- --check",
     "cargo clippy --all-targets -- -D warnings",
@@ -944,6 +944,24 @@
       "proof_path": "docs/STATUS_2026-10-09.md",
       "dod": "Current project state, verified audit completion, outstanding validation, and next steps are consistent across README, plan, status handover, and taskboard.",
       "depends_on": [
+        "P-018"
+      ]
+    },
+    {
+      "id": "P-084",
+      "phase": "P2",
+      "area": "Upstream component evaluation",
+      "title": "Evaluate candidate WebAgent components individually before reuse",
+      "type": "research",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": "docs/UPSTREAM_COMPONENT_EVALUATION_POLICY.md",
+      "dod": "For every candidate component required by the initial browser-chat path, record exact upstream revision/path/symbol, purpose, dependency/call graph, side effects, tests and limitations, security/licensing, alternatives, explicit decision, and project-local verification plan. No component is approved by the repository-wide audit alone; the public WebAgent API bridge is excluded as product core.",
+      "depends_on": [
+        "P-017",
         "P-018"
       ]
     }

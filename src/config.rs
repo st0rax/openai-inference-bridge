@@ -49,15 +49,11 @@ impl Config {
         let bind_addr: SocketAddr = bind_text.parse().map_err(|_| ConfigError::InvalidBind)?;
 
         let token = get("OIB_API_TOKEN").ok_or(ConfigError::MissingToken)?;
-        if token.len() < TOKEN_MIN_LEN
-            || !token.bytes().all(|byte| (0x20..=0x7e).contains(&byte))
-        {
+        if token.len() < TOKEN_MIN_LEN || !token.bytes().all(|byte| (0x20..=0x7e).contains(&byte)) {
             return Err(ConfigError::WeakToken);
         }
 
-        if !bind_addr.ip().is_loopback()
-            && get("OIB_ALLOW_REMOTE").as_deref() != Some("1")
-        {
+        if !bind_addr.ip().is_loopback() && get("OIB_ALLOW_REMOTE").as_deref() != Some("1") {
             return Err(ConfigError::RemoteBindRequiresOptIn);
         }
 
@@ -96,9 +92,7 @@ impl Config {
     }
 }
 
-fn default_data_dir(
-    get: &mut impl FnMut(&str) -> Option<String>,
-) -> Result<PathBuf, ConfigError> {
+fn default_data_dir(get: &mut impl FnMut(&str) -> Option<String>) -> Result<PathBuf, ConfigError> {
     #[cfg(target_os = "windows")]
     {
         if let Some(root) = get("LOCALAPPDATA").filter(|value| !value.is_empty()) {
@@ -120,8 +114,7 @@ fn default_data_dir(
     #[cfg(target_os = "macos")]
     {
         if let Some(home) = get("HOME").filter(|value| !value.is_empty()) {
-            let path = PathBuf::from(home)
-                .join("Library/Application Support/OpenAIInferenceBridge");
+            let path = PathBuf::from(home).join("Library/Application Support/OpenAIInferenceBridge");
             if path.is_absolute() {
                 return Ok(path);
             }
@@ -156,39 +149,35 @@ mod tests {
     const TOKEN: &str = "example-secret-token-that-is-long-enough";
 
     fn config(values: &[(&str, &str)]) -> Result<Config, ConfigError> {
-        Config::from_lookup(|key| {
-            values
-                .iter()
-                .find(|(name, _)| *name == key)
-                .map(|(_, value)| (*value).to_owned())
-        })
+        Config::from_lookup(|key| values.iter().find(|(name, _)| *name == key).map(|(_, value)| (*value).to_owned()))
+    }
+
+    fn temp_data_dir() -> String {
+        env::temp_dir().join("oib-test").to_string_lossy().into_owned()
     }
 
     #[test]
     fn defaults_to_loopback_and_expected_port() {
-        let config = config(&[
-            ("OIB_API_TOKEN", TOKEN),
-            ("OIB_DATA_DIR", "/tmp/oib"),
-        ])
-        .unwrap();
+        let data_dir = temp_data_dir();
+        let config = config(&[("OIB_API_TOKEN", TOKEN), ("OIB_DATA_DIR", &data_dir)]).unwrap();
         assert_eq!(config.bind_addr.to_string(), DEFAULT_BIND);
     }
 
     #[test]
     fn token_is_required_and_must_be_strong_ascii() {
+        let data_dir = temp_data_dir();
         assert_eq!(
-            config(&[("OIB_DATA_DIR", "/tmp/oib")]).unwrap_err(),
+            config(&[("OIB_DATA_DIR", &data_dir)]).unwrap_err(),
             ConfigError::MissingToken
         );
         assert_eq!(
-            config(&[("OIB_API_TOKEN", "short"), ("OIB_DATA_DIR", "/tmp/oib")])
-                .unwrap_err(),
+            config(&[("OIB_API_TOKEN", "short"), ("OIB_DATA_DIR", &data_dir)]).unwrap_err(),
             ConfigError::WeakToken
         );
         assert_eq!(
             config(&[
                 ("OIB_API_TOKEN", "token-with-newline\nnot-valid"),
-                ("OIB_DATA_DIR", "/tmp/oib"),
+                ("OIB_DATA_DIR", &data_dir),
             ])
             .unwrap_err(),
             ConfigError::WeakToken
@@ -197,10 +186,11 @@ mod tests {
 
     #[test]
     fn non_loopback_requires_explicit_opt_in() {
+        let data_dir = temp_data_dir();
         let values = [
             ("OIB_API_TOKEN", TOKEN),
             ("OIB_BIND", "0.0.0.0:8788"),
-            ("OIB_DATA_DIR", "/tmp/oib"),
+            ("OIB_DATA_DIR", &data_dir),
         ];
         assert_eq!(
             config(&values).unwrap_err(),
@@ -211,7 +201,7 @@ mod tests {
             ("OIB_API_TOKEN", TOKEN),
             ("OIB_BIND", "0.0.0.0:8788"),
             ("OIB_ALLOW_REMOTE", "1"),
-            ("OIB_DATA_DIR", "/tmp/oib"),
+            ("OIB_DATA_DIR", &data_dir),
         ];
         assert!(config(&values).is_ok());
     }
@@ -219,22 +209,15 @@ mod tests {
     #[test]
     fn data_directory_must_be_absolute() {
         assert_eq!(
-            config(&[
-                ("OIB_API_TOKEN", TOKEN),
-                ("OIB_DATA_DIR", "relative/path"),
-            ])
-            .unwrap_err(),
+            config(&[("OIB_API_TOKEN", TOKEN), ("OIB_DATA_DIR", "relative/path")]).unwrap_err(),
             ConfigError::InvalidDataDir
         );
     }
 
     #[test]
     fn token_is_redacted_from_debug() {
-        let config = config(&[
-            ("OIB_API_TOKEN", TOKEN),
-            ("OIB_DATA_DIR", "/tmp/oib"),
-        ])
-        .unwrap();
+        let data_dir = temp_data_dir();
+        let config = config(&[("OIB_API_TOKEN", TOKEN), ("OIB_DATA_DIR", &data_dir)]).unwrap();
         let debug = format!("{config:?}");
         assert!(!debug.contains(TOKEN));
         assert!(debug.contains("[REDACTED]"));
@@ -242,14 +225,11 @@ mod tests {
 
     #[test]
     fn profile_path_is_scoped_and_slug_is_validated() {
-        let config = config(&[
-            ("OIB_API_TOKEN", TOKEN),
-            ("OIB_DATA_DIR", "/tmp/oib"),
-        ])
-        .unwrap();
+        let data_dir = temp_data_dir();
+        let config = config(&[("OIB_API_TOKEN", TOKEN), ("OIB_DATA_DIR", &data_dir)]).unwrap();
         assert_eq!(
             config.profile_dir("chatgpt").unwrap(),
-            PathBuf::from("/tmp/oib/profiles/chatgpt")
+            env::temp_dir().join("oib-test/profiles/chatgpt")
         );
         assert!(config.profile_dir("../shared").is_err());
         assert!(config.profile_dir("ChatGPT").is_err());

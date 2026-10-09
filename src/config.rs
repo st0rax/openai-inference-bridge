@@ -240,6 +240,10 @@ mod tests {
             config.profile_dir("chatgpt").unwrap(),
             env::temp_dir().join("oib-test/profiles/chatgpt")
         );
+        assert_eq!(
+            config.profile_dir("1brain").unwrap(),
+            env::temp_dir().join("oib-test/profiles/1brain")
+        );
         assert!(config.profile_dir("../shared").is_err());
         assert!(config.profile_dir("ChatGPT").is_err());
     }

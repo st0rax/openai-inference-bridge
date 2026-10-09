@@ -566,35 +566,74 @@ mod tests {
         .unwrap()
     }
 
+    struct FakeBackend;
+
+    impl BrainBackend for FakeBackend {
+        fn start(&mut self, _deadline: Instant) -> Result<(), BackendError> {
+            Ok(())
+        }
+
+        fn readiness(&mut self, _deadline: Instant) -> Result<Readiness, BackendError> {
+            Ok(Readiness::Ready)
+        }
+
+        fn infer(
+            &mut self,
+            request: &InferenceRequest,
+            event_sink: &mut dyn FnMut(crate::brain_backend::BackendEvent),
+        ) -> Result<String, BackendError> {
+            event_sink(crate::brain_backend::BackendEvent::AssistantTextSnapshot(
+                "fake reply".to_owned(),
+            ));
+            Ok(format!("fake reply for {}", request.prompt))
+        }
+
+        fn shutdown(&mut self, _deadline: Instant) -> Result<(), BackendError> {
+            Ok(())
+        }
+    }
+
+    fn test_manager(registry: BrainRegistry) -> BrainManager {
+        BrainManager::new(registry, |_| {
+            Ok(Box::new(FakeBackend) as Box<dyn BrainBackend>)
+        })
+    }
+
     #[test]
-    fn model_list_is_implemented_and_chat_route_validates_requests() {
-        let models = route(&request("GET", "/v1/models"), &BrainRegistry::empty());
+    fn model_list_and_chat_completion_route_use_registry_and_backend() {
+        let empty_registry = BrainRegistry::empty();
+        let empty_manager = test_manager(empty_registry.clone());
+        let models = route(
+            &request("GET", "/v1/models"),
+            &empty_registry,
+            &empty_manager,
+        );
         assert_eq!(models.status, 200);
         assert_eq!(models.body, r#"{"object":"list","data":[]}"#);
 
         let missing_content_type = route(
             &request("POST", "/v1/chat/completions"),
-            &BrainRegistry::empty(),
+            &empty_registry,
+            &empty_manager,
         );
         assert_eq!(missing_content_type.status, 415);
 
         let body = br#"{"model":"oib/chatgpt","messages":[{"role":"user","content":"hi"}]}"#;
-        let missing_model = route(&chat_request(body), &BrainRegistry::empty());
+        let missing_model = route(&chat_request(body), &empty_registry, &empty_manager);
         assert_eq!(missing_model.status, 404);
         assert!(missing_model.body.contains("model_not_found"));
 
-        let configured_but_unavailable = route(&chat_request(body), &configured_registry());
-        assert_eq!(configured_but_unavailable.status, 503);
-        assert!(
-            configured_but_unavailable
-                .body
-                .contains("brain_runtime_unavailable")
-        );
+        let registry = configured_registry();
+        let manager = test_manager(registry.clone());
+        let response = route(&chat_request(body), &registry, &manager);
+        assert_eq!(response.status, 200);
+        assert!(response.body.contains(r#""object":"chat.completion""#));
+        assert!(response.body.contains("fake reply for"));
     }
 
     #[test]
     fn known_route_rejects_wrong_method() {
-        let response = route(&request("POST", "/v1/models"), &BrainRegistry::empty());
+        let response = route(&request("POST", "/v1/models"), &BrainRegistry::empty(), &test_manager(BrainRegistry::empty()));
         assert_eq!(response.status, 405);
         assert_eq!(response.allow, Some("GET"));
     }
@@ -602,7 +641,7 @@ mod tests {
     #[test]
     fn unknown_route_is_not_found() {
         assert_eq!(
-            route(&request("GET", "/private"), &BrainRegistry::empty()).status,
+            route(&request("GET", "/private"), &BrainRegistry::empty(), &test_manager(BrainRegistry::empty())).status,
             404
         );
     }
@@ -622,7 +661,9 @@ mod tests {
     #[test]
     fn authentication_runs_before_route_dispatch() {
         let request = request("GET", "/v1/models");
-        let unauthorized = dispatch(&request, TOKEN, &BrainRegistry::empty());
+        let empty_registry = BrainRegistry::empty();
+        let manager = test_manager(empty_registry.clone());
+        let unauthorized = dispatch(&request, TOKEN, &empty_registry, &manager);
         assert_eq!(unauthorized.status, 401);
         assert_eq!(unauthorized.www_authenticate, Some("Bearer"));
         assert!(
@@ -635,7 +676,7 @@ mod tests {
         let mut authorized_request = request;
         authorized_request.authorization = Some(format!("Bearer {TOKEN}"));
         assert_eq!(
-            dispatch(&authorized_request, TOKEN, &BrainRegistry::empty()).status,
+            dispatch(&authorized_request, TOKEN, &empty_registry, &manager).status,
             200
         );
     }

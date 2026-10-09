@@ -7,7 +7,7 @@ use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::time::Duration;
 
-use crate::{api_error::ApiError, config::Config};
+use crate::{api_error::ApiError, brain_registry::BrainRegistry, config::Config};
 
 const MAX_HEADER_BYTES: usize = 16 * 1024;
 const READ_TIMEOUT: Duration = Duration::from_secs(5);
@@ -29,30 +29,33 @@ struct Response {
 }
 
 impl Response {
+    fn json(status: u16, reason: &'static str, body: String) -> Self {
+        Self {
+            status,
+            reason,
+            body,
+            allow: None,
+            www_authenticate: None,
+        }
+    }
+
     fn error(
         status: u16,
         reason: &'static str,
         error_type: &'static str,
         message: &'static str,
     ) -> Self {
-        Self {
+        Self::json(
             status,
             reason,
-            body: ApiError::new(status, error_type, message).to_json(),
-            allow: None,
-            www_authenticate: None,
-        }
+            ApiError::new(status, error_type, message).to_json(),
+        )
     }
 }
 
-fn route(request: &Request) -> Response {
+fn route(request: &Request, registry: &BrainRegistry) -> Response {
     match (request.method.as_str(), request.target.as_str()) {
-        ("GET", "/v1/models") => Response::error(
-            501,
-            "Not Implemented",
-            "not_implemented_error",
-            "GET /v1/models is not implemented yet",
-        ),
+        ("GET", "/v1/models") => Response::json(200, "OK", registry.models_json()),
         ("POST", "/v1/chat/completions") => Response::error(
             501,
             "Not Implemented",
@@ -85,6 +88,8 @@ fn route(request: &Request) -> Response {
 /// when configuration opted in, because TLS and remote deployment hardening are absent.
 pub fn run(config: Config) -> io::Result<()> {
     validate_bind(config.bind_addr)?;
+    let registry = BrainRegistry::from_env(&config)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
     let listener = TcpListener::bind(config.bind_addr)?;
     eprintln!("HTTP listener bound to {}", listener.local_addr()?);
 
@@ -95,7 +100,7 @@ pub fn run(config: Config) -> io::Result<()> {
                     eprintln!("failed to set HTTP read timeout: {error}");
                     continue;
                 }
-                if let Err(error) = handle_connection(&mut stream, config.api_token()) {
+                if let Err(error) = handle_connection(&mut stream, config.api_token(), &registry) {
                     eprintln!("HTTP connection ended: {error}");
                 }
             }
@@ -116,9 +121,13 @@ fn validate_bind(bind_addr: SocketAddr) -> io::Result<()> {
     Ok(())
 }
 
-fn handle_connection(stream: &mut TcpStream, expected_token: &str) -> io::Result<()> {
+fn handle_connection(
+    stream: &mut TcpStream,
+    expected_token: &str,
+    registry: &BrainRegistry,
+) -> io::Result<()> {
     let response = match read_request(stream) {
-        Ok(request) => dispatch(&request, expected_token),
+        Ok(request) => dispatch(&request, expected_token, registry),
         Err(error)
             if error.kind() == io::ErrorKind::TimedOut
                 || error.kind() == io::ErrorKind::WouldBlock =>
@@ -140,7 +149,7 @@ fn handle_connection(stream: &mut TcpStream, expected_token: &str) -> io::Result
     write_response(stream, &response)
 }
 
-fn dispatch(request: &Request, expected_token: &str) -> Response {
+fn dispatch(request: &Request, expected_token: &str, registry: &BrainRegistry) -> Response {
     if !is_authorized(request.authorization.as_deref(), expected_token) {
         return Response {
             www_authenticate: Some("Bearer"),
@@ -152,7 +161,7 @@ fn dispatch(request: &Request, expected_token: &str) -> Response {
             )
         };
     }
-    route(request)
+    route(request, registry)
 }
 
 fn is_authorized(header: Option<&str>, expected_token: &str) -> bool {
@@ -332,21 +341,31 @@ mod tests {
     }
 
     #[test]
-    fn known_routes_are_explicitly_not_implemented_yet() {
-        assert_eq!(route(&request("GET", "/v1/models")).status, 501);
-        assert_eq!(route(&request("POST", "/v1/chat/completions")).status, 501);
+    fn model_list_is_implemented_and_chat_completions_is_not_yet() {
+        let models = route(&request("GET", "/v1/models"), &BrainRegistry::empty());
+        assert_eq!(models.status, 200);
+        assert_eq!(models.body, r#"{"object":"list","data":[]}"#);
+
+        let completions = route(
+            &request("POST", "/v1/chat/completions"),
+            &BrainRegistry::empty(),
+        );
+        assert_eq!(completions.status, 501);
     }
 
     #[test]
     fn known_route_rejects_wrong_method() {
-        let response = route(&request("POST", "/v1/models"));
+        let response = route(&request("POST", "/v1/models"), &BrainRegistry::empty());
         assert_eq!(response.status, 405);
         assert_eq!(response.allow, Some("GET"));
     }
 
     #[test]
     fn unknown_route_is_not_found() {
-        assert_eq!(route(&request("GET", "/private")).status, 404);
+        assert_eq!(
+            route(&request("GET", "/private"), &BrainRegistry::empty()).status,
+            404
+        );
     }
 
     #[test]
@@ -364,7 +383,7 @@ mod tests {
     #[test]
     fn authentication_runs_before_route_dispatch() {
         let request = request("GET", "/v1/models");
-        let unauthorized = dispatch(&request, TOKEN);
+        let unauthorized = dispatch(&request, TOKEN, &BrainRegistry::empty());
         assert_eq!(unauthorized.status, 401);
         assert_eq!(unauthorized.www_authenticate, Some("Bearer"));
         assert!(
@@ -376,7 +395,10 @@ mod tests {
 
         let mut authorized_request = request;
         authorized_request.authorization = Some(format!("Bearer {TOKEN}"));
-        assert_eq!(dispatch(&authorized_request, TOKEN).status, 501);
+        assert_eq!(
+            dispatch(&authorized_request, TOKEN, &BrainRegistry::empty()).status,
+            200
+        );
     }
 
     #[test]

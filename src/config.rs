@@ -44,7 +44,9 @@ impl Config {
         Self::from_lookup(|key| env::var(key).ok())
     }
 
-    fn from_lookup(mut get: impl FnMut(&str) -> Option<String>) -> Result<Self, ConfigError> {
+    pub(crate) fn from_lookup(
+        mut get: impl FnMut(&str) -> Option<String>,
+    ) -> Result<Self, ConfigError> {
         let bind_text = get("OIB_BIND").unwrap_or_else(|| DEFAULT_BIND.to_owned());
         let bind_addr: SocketAddr = bind_text.parse().map_err(|_| ConfigError::InvalidBind)?;
 
@@ -81,7 +83,7 @@ impl Config {
 
     pub fn profile_dir(&self, slug: &str) -> Result<PathBuf, ConfigError> {
         if slug.is_empty()
-            || !slug.as_bytes()[0].is_ascii_lowercase()
+            || !(slug.as_bytes()[0].is_ascii_lowercase() || slug.as_bytes()[0].is_ascii_digit())
             || !slug
                 .bytes()
                 .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
@@ -239,6 +241,10 @@ mod tests {
         assert_eq!(
             config.profile_dir("chatgpt").unwrap(),
             env::temp_dir().join("oib-test/profiles/chatgpt")
+        );
+        assert_eq!(
+            config.profile_dir("1brain").unwrap(),
+            env::temp_dir().join("oib-test/profiles/1brain")
         );
         assert!(config.profile_dir("../shared").is_err());
         assert!(config.profile_dir("ChatGPT").is_err());

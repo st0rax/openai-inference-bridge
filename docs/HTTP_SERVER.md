@@ -12,7 +12,7 @@ For safety, the runtime rejects every non-loopback bind address even if `OIB_ALL
 
 | Request | Result |
 | --- | --- |
-| `GET /v1/models` | `501 Not Implemented` |
+| `GET /v1/models` | `200 OK` with the configured enabled Brain list (possibly empty) |
 | `POST /v1/chat/completions` | `501 Not Implemented` |
 | Known route with wrong method | `405 Method Not Allowed`, with `Allow` header |
 | Unknown route | `404 Not Found` |

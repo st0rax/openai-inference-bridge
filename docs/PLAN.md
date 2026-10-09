@@ -28,5 +28,6 @@ Task dependencies are authoritative in `docs/TASKBOARD.json`.
 
 ## Status handover
 
-- **Completed:** planning/bootstrap files committed to the new GitHub repository.
-- **Next:** `P-010` and `P-017` before any implementation reuse; `P-001` is now the repository baseline and should be marked done only after checking the committed tree.
+- **Completed:** source-level audits `P-010`–`P-017` and file-level reuse decision are documented and merged.
+- **Next:** `P-018` integration strategy is documented; then `P-004` clean Rust/CI setup and a pinned-dependency build spike must validate the recommendation.
+- **Not verified:** no clean Cargo build, upstream tests or live browser turn has been run from this new repository.

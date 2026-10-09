@@ -48,10 +48,16 @@ impl fmt::Display for RegistryError {
             Self::InvalidBrainId(id) => write!(f, "invalid Brain ID: {id}"),
             Self::DuplicateBrainId(id) => write!(f, "duplicate Brain ID: {id}"),
             Self::MissingField { brain_id, field } => {
-                write!(f, "missing configuration field {field} for Brain {brain_id}")
+                write!(
+                    f,
+                    "missing configuration field {field} for Brain {brain_id}"
+                )
             }
             Self::InvalidEnabledValue { brain_id } => {
-                write!(f, "invalid enabled flag for Brain {brain_id}; expected 0 or 1")
+                write!(
+                    f,
+                    "invalid enabled flag for Brain {brain_id}; expected 0 or 1"
+                )
             }
             Self::InvalidStartUrl { brain_id } => {
                 write!(f, "invalid HTTP(S) start URL for Brain {brain_id}")
@@ -60,7 +66,10 @@ impl fmt::Display for RegistryError {
                 write!(f, "unsupported adapter {adapter} for Brain {brain_id}")
             }
             Self::InvalidProfilePath { brain_id } => {
-                write!(f, "could not derive isolated profile path for Brain {brain_id}")
+                write!(
+                    f,
+                    "could not derive isolated profile path for Brain {brain_id}"
+                )
             }
         }
     }
@@ -107,16 +116,18 @@ impl BrainRegistry {
             let enabled = match enabled_value.as_str() {
                 "1" => true,
                 "0" => false,
-                _ => return Err(RegistryError::InvalidEnabledValue {
-                    brain_id: id.to_owned(),
-                }),
+                _ => {
+                    return Err(RegistryError::InvalidEnabledValue {
+                        brain_id: id.to_owned(),
+                    });
+                }
             };
 
-            let profile_dir = config
-                .profile_dir(id)
-                .map_err(|_: ConfigError| RegistryError::InvalidProfilePath {
+            let profile_dir = config.profile_dir(id).map_err(|_: ConfigError| {
+                RegistryError::InvalidProfilePath {
                     brain_id: id.to_owned(),
-                })?;
+                }
+            })?;
 
             if !enabled {
                 brains.push(Brain {
@@ -333,7 +344,13 @@ mod tests {
     #[test]
     fn enabled_brain_uses_canonical_model_id_and_is_resolvable() {
         let registry = registry(&enabled_chatgpt()).unwrap();
-        assert_eq!(registry.resolve_model_id("oib/chatgpt").unwrap().display_name, "ChatGPT");
+        assert_eq!(
+            registry
+                .resolve_model_id("oib/chatgpt")
+                .unwrap()
+                .display_name,
+            "ChatGPT"
+        );
         assert!(registry.resolve_model_id("chatgpt").is_none());
         assert!(registry.resolve_model_id("oib/unknown").is_none());
         assert!(registry.models_json().contains(r#""id":"oib/chatgpt""#));

@@ -287,10 +287,9 @@ mod tests {
         .unwrap_err();
         assert_eq!(final_assistant.code.as_deref(), Some("invalid_messages"));
 
-        let invalid_model = normalize_request(
-            br#"{"model":"","messages":[{"role":"user","content":"hi"}]}"#,
-        )
-        .unwrap_err();
+        let invalid_model =
+            normalize_request(br#"{"model":"","messages":[{"role":"user","content":"hi"}]}"#)
+                .unwrap_err();
         assert_eq!(invalid_model.param.as_deref(), Some("model"));
     }
 }

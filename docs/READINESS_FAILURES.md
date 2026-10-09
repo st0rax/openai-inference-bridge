@@ -24,4 +24,4 @@ The runtime contract exposes explicit readiness states and typed backend failure
 - Error messages must remain safe diagnostics. Never include prompts, reply text, Authorization values, cookies, or profile paths.
 - A `Ready` status means only that the concrete driver has positively identified a usable provider page. It is not inferred from a successful navigation alone.
 
-**Current limitation:** mapping is implemented and tested, but no concrete WebView driver is connected to the executable. The live provider readiness states are therefore not yet observed in production code, and Chat Completions still returns `503 brain_runtime_unavailable` for configured models.
+**Current limitation:** the mapping and Chromium/Edge driver are connected, but no live provider run has verified the DOM selectors or readiness heuristics. Treat those heuristics as unvalidated until a manual browser test succeeds.

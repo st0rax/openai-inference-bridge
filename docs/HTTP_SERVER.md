@@ -13,7 +13,7 @@ For safety, the runtime rejects every non-loopback bind address even if `OIB_ALL
 | Request | Result |
 | --- | --- |
 | `GET /v1/models` | `200 OK` with the configured enabled Brain list (possibly empty) |
-| `POST /v1/chat/completions` | `501 Not Implemented` |
+| `POST /v1/chat/completions` | Validates and normalizes request; returns `503` when no Brain execution backend is connected |
 | Known route with wrong method | `405 Method Not Allowed`, with `Allow` header |
 | Unknown route | `404 Not Found` |
 | Malformed request headers/line | `400 Bad Request` |
@@ -32,7 +32,7 @@ Responses use JSON error bodies, include a byte-accurate `Content-Length`, and c
 - It does not support keep-alive, chunked request bodies, TLS, CORS, or inference endpoints.
 - Do not expose it to a network. Remote binding is explicitly refused by the runtime.
 
-The next tasks add structured API errors, model discovery, and Chat Completions. Keep the current `501` responses until each endpoint is actually implemented and tested; do not advertise a route as working merely because it appears in the route table.
+The next tasks connect a Brain execution backend and implement successful Chat Completions responses. Keep the current `501` responses until each endpoint is actually implemented and tested; do not advertise a route as working merely because it appears in the route table.
 
 
 HTTP failures use the envelope defined in [API_ERRORS.md](API_ERRORS.md). This only standardizes error responses; successful inference responses and request payload parsing remain unimplemented.

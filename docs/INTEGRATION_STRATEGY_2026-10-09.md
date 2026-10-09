@@ -55,6 +55,10 @@ Defer Responses API, Anthropic routes, images/audio, tool calls, persistence, an
 
 **Stop and redesign** if a required upstream component cannot be isolated safely, carries unacceptable coupling, or cannot be tested reliably. Do not resolve such a failure by adopting WebAgent's public API bridge or copying a broad subsystem without a new evaluation.
 
+## Component evaluation
+
+The initial browser-text path has been evaluated component by component in [the component evaluation report](COMPONENT_EVALUATION_2026-10-09.md). No WebAgent source reuse or WebAgent crate dependency is approved. The report recommends a project-owned Brain contract, a minimal project-owned WebView runtime, one provider adapter, and independent one-turn/API logic. This is source inspection only; no build or live-browser test has been run.
+
 ## Existing evidence
 
 The existing source audits remain useful for discovery:

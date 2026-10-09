@@ -84,12 +84,12 @@
       "area": "Foundation",
       "title": "Implement safe configuration defaults",
       "type": "security",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "feat/P-005-safe-config-defaults",
       "claimed_at": "2026-10-09",
-      "done_at": null,
-      "proof_path": null,
+      "done_at": "2026-10-09",
+      "proof_path": "docs/CONFIGURATION.md; GitHub Actions run 37872672234 (Ubuntu and Windows: fmt, Clippy, tests passed)",
       "dod": "Implement safe configuration defaults is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [
         "P-001"

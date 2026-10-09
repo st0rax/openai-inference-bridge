@@ -8,6 +8,7 @@ The bridge configuration is read from environment variables. The server runtime 
 | `OIB_API_TOKEN` | Required | Bearer token; at least 32 printable ASCII characters. |
 | `OIB_ALLOW_REMOTE` | Unset | Must equal `1` to allow a non-loopback bind address. |
 | `OIB_DATA_DIR` | Platform-specific | Absolute application data directory. |
+| `OIB_BROWSER_EXECUTABLE` | Auto-detected | Optional path to a Chromium/Edge executable; no browser path is logged. |
 
 Default data directory:
 - Windows: `%LOCALAPPDATA%\OpenAIInferenceBridge`, with a `%USERPROFILE%\AppData\Local\OpenAIInferenceBridge` fallback.
@@ -18,7 +19,7 @@ Each Brain's browser profile path is isolated below `profiles/<brain-slug>`. Slu
 
 The token is redacted from the configuration's Debug representation. Do not pass secrets as command-line arguments or log their values. A remote bind opt-in is not a substitute for TLS, firewall policy, or a security review; remote serving should remain disabled unless the deployment deliberately supplies those controls.
 
-The configuration is loaded by the initial local HTTP listener. The listener enforces bearer-token authentication. `GET /v1/models` lists configured enabled Brains. `POST /v1/chat/completions` validates and normalizes non-streaming requests, but returns `503` for a configured model until a Brain execution backend is connected. No browser runtime is connected yet.
+The configuration is loaded by the initial local HTTP listener. The listener enforces bearer-token authentication. `GET /v1/models` lists configured enabled Brains. `POST /v1/chat/completions` validates and normalizes non-streaming requests, then invokes the isolated Chromium/Edge DevTools driver. Streaming remains unsupported. Live provider inference has not been verified in CI.
 
 
 

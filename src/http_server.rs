@@ -123,7 +123,11 @@ fn validate_bind(bind_addr: SocketAddr) -> io::Result<()> {
     Ok(())
 }
 
-fn handle_connection(\n    stream: &mut TcpStream,\n    expected_token: &str,\n    registry: &BrainRegistry,\n) -> io::Result<()> {
+fn handle_connection(
+    stream: &mut TcpStream,
+    expected_token: &str,
+    registry: &BrainRegistry,
+) -> io::Result<()> {
     let response = match read_request(stream) {
         Ok(request) => dispatch(&request, expected_token, registry),
         Err(error)

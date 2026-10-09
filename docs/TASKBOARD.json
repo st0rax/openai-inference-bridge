@@ -1,0 +1,934 @@
+{
+  "project": "openai-inference-bridge",
+  "created": "2026-10-09",
+  "owner": "st0rax",
+  "task_count": 51,
+  "note": "Dependencies are hard DAG edges: a task remains blocked until every dependency is done. Claim a task before editing; mark done only with verification evidence.",
+  "verification": [
+    "cargo fmt --all -- --check",
+    "cargo clippy --all-targets -- -D warnings",
+    "cargo test",
+    "git diff --check"
+  ],
+  "tasks": [
+    {
+      "id": "P-001",
+      "phase": "P1",
+      "area": "Foundation",
+      "title": "Create repository skeleton",
+      "type": "chore",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Create repository skeleton is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": []
+    },
+    {
+      "id": "P-002",
+      "phase": "P1",
+      "area": "Foundation",
+      "title": "Finalize scope and terminology",
+      "type": "docs",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Finalize scope and terminology is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-001"
+      ]
+    },
+    {
+      "id": "P-003",
+      "phase": "P1",
+      "area": "Foundation",
+      "title": "Review license and attribution policy",
+      "type": "docs",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Review license and attribution policy is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-001"
+      ]
+    },
+    {
+      "id": "P-004",
+      "phase": "P1",
+      "area": "Foundation",
+      "title": "Set up Rust workspace and CI",
+      "type": "chore",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Set up Rust workspace and CI is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-001",
+        "P-003"
+      ]
+    },
+    {
+      "id": "P-005",
+      "phase": "P1",
+      "area": "Foundation",
+      "title": "Implement safe configuration defaults",
+      "type": "security",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement safe configuration defaults is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-001"
+      ]
+    },
+    {
+      "id": "P-010",
+      "phase": "P2",
+      "area": "Upstream audit",
+      "title": "Inventory API bridge modules and call graph",
+      "type": "research",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Inventory API bridge modules and call graph is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-002"
+      ]
+    },
+    {
+      "id": "P-011",
+      "phase": "P2",
+      "area": "Upstream audit",
+      "title": "Trace BrainBackend and browser lifecycle",
+      "type": "research",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Trace BrainBackend and browser lifecycle is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-010"
+      ]
+    },
+    {
+      "id": "P-012",
+      "phase": "P2",
+      "area": "Upstream audit",
+      "title": "Trace inference invocation and locking",
+      "type": "research",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Trace inference invocation and locking is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-010",
+        "P-011"
+      ]
+    },
+    {
+      "id": "P-013",
+      "phase": "P2",
+      "area": "Upstream audit",
+      "title": "Audit Chat Completions compatibility",
+      "type": "research",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Audit Chat Completions compatibility is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-010"
+      ]
+    },
+    {
+      "id": "P-014",
+      "phase": "P2",
+      "area": "Upstream audit",
+      "title": "Audit Responses API behavior",
+      "type": "research",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Audit Responses API behavior is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-010"
+      ]
+    },
+    {
+      "id": "P-016",
+      "phase": "P2",
+      "area": "Upstream audit",
+      "title": "Audit multimodal normalization",
+      "type": "research",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Audit multimodal normalization is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-013"
+      ]
+    },
+    {
+      "id": "P-017",
+      "phase": "P2",
+      "area": "Upstream audit",
+      "title": "Create file-level reuse decision matrix",
+      "type": "research",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Create file-level reuse decision matrix is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-010",
+        "P-011",
+        "P-012",
+        "P-013",
+        "P-014",
+        "P-016",
+        "P-003"
+      ]
+    },
+    {
+      "id": "P-018",
+      "phase": "P2",
+      "area": "Upstream audit",
+      "title": "Define extraction and migration strategy",
+      "type": "docs",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Define extraction and migration strategy is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-017"
+      ]
+    },
+    {
+      "id": "P-020",
+      "phase": "P3",
+      "area": "Architecture",
+      "title": "Define independent BrainBackend interface",
+      "type": "design",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Define independent BrainBackend interface is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-018"
+      ]
+    },
+    {
+      "id": "P-021",
+      "phase": "P3",
+      "area": "Architecture",
+      "title": "Define Brain registry and model IDs",
+      "type": "design",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Define Brain registry and model IDs is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-020"
+      ]
+    },
+    {
+      "id": "P-022",
+      "phase": "P3",
+      "area": "Architecture",
+      "title": "Define per-Brain capability declarations",
+      "type": "design",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Define per-Brain capability declarations is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-020"
+      ]
+    },
+    {
+      "id": "P-023",
+      "phase": "P3",
+      "area": "Architecture",
+      "title": "Define normalized request and event types",
+      "type": "design",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Define normalized request and event types is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-018"
+      ]
+    },
+    {
+      "id": "P-024",
+      "phase": "P3",
+      "area": "Architecture",
+      "title": "Define persistence and conversation-state policy",
+      "type": "design",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Define persistence and conversation-state policy is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-023"
+      ]
+    },
+    {
+      "id": "P-025",
+      "phase": "P3",
+      "area": "Architecture",
+      "title": "Define configuration and secret handling",
+      "type": "design",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Define configuration and secret handling is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-005",
+        "P-018"
+      ]
+    },
+    {
+      "id": "P-030",
+      "phase": "P3",
+      "area": "API core",
+      "title": "Implement HTTP server and routing",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement HTTP server and routing is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-004",
+        "P-023",
+        "P-025"
+      ]
+    },
+    {
+      "id": "P-031",
+      "phase": "P3",
+      "area": "API core",
+      "title": "Implement authentication and binding policy",
+      "type": "security",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement authentication and binding policy is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-025",
+        "P-030"
+      ]
+    },
+    {
+      "id": "P-032",
+      "phase": "P3",
+      "area": "API core",
+      "title": "Implement structured API errors",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement structured API errors is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-023",
+        "P-030"
+      ]
+    },
+    {
+      "id": "P-033",
+      "phase": "P3",
+      "area": "API core",
+      "title": "Implement GET /v1/models",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement GET /v1/models is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-021",
+        "P-030"
+      ]
+    },
+    {
+      "id": "P-034",
+      "phase": "P3",
+      "area": "API core",
+      "title": "Implement non-streaming Chat Completions",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement non-streaming Chat Completions is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-023",
+        "P-030",
+        "P-032"
+      ]
+    },
+    {
+      "id": "P-035",
+      "phase": "P3",
+      "area": "API core",
+      "title": "Implement SSE streaming semantics",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement SSE streaming semantics is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-034"
+      ]
+    },
+    {
+      "id": "P-036",
+      "phase": "P3",
+      "area": "API core",
+      "title": "Implement timeouts and cancellation",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement timeouts and cancellation is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-035"
+      ]
+    },
+    {
+      "id": "P-037",
+      "phase": "P3",
+      "area": "API core",
+      "title": "Add request validation and protocol tests",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Add request validation and protocol tests is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-032",
+        "P-034",
+        "P-035"
+      ]
+    },
+    {
+      "id": "P-040",
+      "phase": "P4",
+      "area": "Brain runtime",
+      "title": "Implement narrow browser Brain adapter",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement narrow browser Brain adapter is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-017",
+        "P-020",
+        "P-021"
+      ]
+    },
+    {
+      "id": "P-041",
+      "phase": "P4",
+      "area": "Brain runtime",
+      "title": "Connect browser session lifecycle",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Connect browser session lifecycle is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-011",
+        "P-040"
+      ]
+    },
+    {
+      "id": "P-042",
+      "phase": "P4",
+      "area": "Brain runtime",
+      "title": "Implement readiness and failure reporting",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement readiness and failure reporting is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-022",
+        "P-041"
+      ]
+    },
+    {
+      "id": "P-043",
+      "phase": "P4",
+      "area": "Brain runtime",
+      "title": "Verify concurrent request behavior",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Verify concurrent request behavior is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-041",
+        "P-035"
+      ]
+    },
+    {
+      "id": "P-044",
+      "phase": "P4",
+      "area": "Brain runtime",
+      "title": "Verify shutdown and session cleanup",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Verify shutdown and session cleanup is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-041",
+        "P-036"
+      ]
+    },
+    {
+      "id": "P-050",
+      "phase": "P4",
+      "area": "Compatibility",
+      "title": "Create OpenAI protocol fixture suite",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Create OpenAI protocol fixture suite is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-033",
+        "P-034",
+        "P-035",
+        "P-037"
+      ]
+    },
+    {
+      "id": "P-051",
+      "phase": "P4",
+      "area": "Compatibility",
+      "title": "Test with an OpenAI-compatible SDK",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Test with an OpenAI-compatible SDK is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-050"
+      ]
+    },
+    {
+      "id": "P-052",
+      "phase": "P4",
+      "area": "Compatibility",
+      "title": "Test Pi integration",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Test Pi integration is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-051",
+        "P-040"
+      ]
+    },
+    {
+      "id": "P-053",
+      "phase": "P4",
+      "area": "Compatibility",
+      "title": "Test OpenCode integration",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Test OpenCode integration is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-051",
+        "P-040"
+      ]
+    },
+    {
+      "id": "P-054",
+      "phase": "P4",
+      "area": "Compatibility",
+      "title": "Test OpenClaw integration",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Test OpenClaw integration is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-051",
+        "P-040"
+      ]
+    },
+    {
+      "id": "P-055",
+      "phase": "P4",
+      "area": "Compatibility",
+      "title": "Test ZeroClaw integration",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Test ZeroClaw integration is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-051",
+        "P-040"
+      ]
+    },
+    {
+      "id": "P-056",
+      "phase": "P4",
+      "area": "Compatibility",
+      "title": "Publish evidence-based compatibility matrix",
+      "type": "docs",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Publish evidence-based compatibility matrix is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-052",
+        "P-053",
+        "P-054",
+        "P-055"
+      ]
+    },
+    {
+      "id": "P-060",
+      "phase": "P5",
+      "area": "Web UI",
+      "title": "Select minimal local web UI stack",
+      "type": "design",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Select minimal local web UI stack is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-018",
+        "P-023"
+      ]
+    },
+    {
+      "id": "P-061",
+      "phase": "P5",
+      "area": "Web UI",
+      "title": "Implement Brain list and readiness view",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement Brain list and readiness view is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-021",
+        "P-042",
+        "P-060"
+      ]
+    },
+    {
+      "id": "P-062",
+      "phase": "P5",
+      "area": "Web UI",
+      "title": "Implement streaming chat test console",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement streaming chat test console is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-034",
+        "P-035",
+        "P-060"
+      ]
+    },
+    {
+      "id": "P-063",
+      "phase": "P5",
+      "area": "Web UI",
+      "title": "Implement redacted configuration diagnostics",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement redacted configuration diagnostics is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-025",
+        "P-061"
+      ]
+    },
+    {
+      "id": "P-070",
+      "phase": "P5",
+      "area": "Hardening",
+      "title": "Review network exposure and browser boundaries",
+      "type": "security",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Review network exposure and browser boundaries is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-030",
+        "P-031",
+        "P-040"
+      ]
+    },
+    {
+      "id": "P-071",
+      "phase": "P5",
+      "area": "Hardening",
+      "title": "Add health and redacted observability",
+      "type": "feature",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Add health and redacted observability is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-030",
+        "P-037"
+      ]
+    },
+    {
+      "id": "P-072",
+      "phase": "P5",
+      "area": "Hardening",
+      "title": "Add failure-recovery and load tests",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Add failure-recovery and load tests is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-043",
+        "P-044",
+        "P-050"
+      ]
+    },
+    {
+      "id": "P-073",
+      "phase": "P5",
+      "area": "Hardening",
+      "title": "Document privacy and retention behavior",
+      "type": "docs",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Document privacy and retention behavior is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-024",
+        "P-070",
+        "P-071"
+      ]
+    },
+    {
+      "id": "P-080",
+      "phase": "P6",
+      "area": "Release",
+      "title": "Write setup and client integration guide",
+      "type": "docs",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Write setup and client integration guide is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-056",
+        "P-061",
+        "P-063"
+      ]
+    },
+    {
+      "id": "P-081",
+      "phase": "P6",
+      "area": "Release",
+      "title": "Add reproducible release packaging",
+      "type": "chore",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Add reproducible release packaging is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-004",
+        "P-044",
+        "P-080"
+      ]
+    },
+    {
+      "id": "P-082",
+      "phase": "P6",
+      "area": "Release",
+      "title": "Publish endpoint and feature limitations",
+      "type": "docs",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Publish endpoint and feature limitations is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-056",
+        "P-072",
+        "P-073"
+      ]
+    },
+    {
+      "id": "P-083",
+      "phase": "P6",
+      "area": "Release",
+      "title": "Run clean-checkout acceptance tests",
+      "type": "test",
+      "status": "free",
+      "owner": null,
+      "branch": null,
+      "claimed_at": null,
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Run clean-checkout acceptance tests is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
+      "depends_on": [
+        "P-081",
+        "P-082"
+      ]
+    }
+  ]
+}

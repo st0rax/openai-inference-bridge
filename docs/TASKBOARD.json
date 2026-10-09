@@ -187,11 +187,11 @@
       "area": "Upstream audit",
       "title": "Audit multimodal normalization",
       "type": "research",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "research/P-016-media-capabilities-audit",
       "claimed_at": "2026-10-09",
-      "done_at": null,
+      "done_at": "2026-10-09",
       "proof_path": "docs/MEDIA_CAPABILITY_AUDIT_2026-10-09.md",
       "dod": "Audit multimodal normalization is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [

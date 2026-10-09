@@ -240,7 +240,7 @@ fn valid_start_url(url: &str) -> bool {
         return false;
     };
     let authority = rest
-        .split(|character| matches!(character, '/' | '?'))
+        .split(['/', '?'])
         .next()
         .unwrap_or("");
     if authority.is_empty() || authority.contains('@') {

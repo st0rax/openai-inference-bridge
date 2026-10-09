@@ -938,10 +938,10 @@
       "type": "docs",
       "status": "done",
       "owner": "ChatGPT",
-      "branch": "docs/status-handover-2026-10-09",
+      "branch": "docs/P-019-status-sync-main",
       "claimed_at": "2026-10-09",
       "done_at": "2026-10-09",
-      "proof_path": "docs/STATUS_2026-10-09.md",
+      "proof_path": "README.md; docs/STATUS_2026-10-09.md; docs/PLAN.md",
       "dod": "Current project state, verified audit completion, outstanding validation, and next steps are consistent across README, plan, status handover, and taskboard.",
       "depends_on": [
         "P-018"

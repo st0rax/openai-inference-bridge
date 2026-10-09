@@ -340,8 +340,15 @@ mod tests {
 
     #[test]
     fn model_list_is_implemented_and_chat_completions_is_not_yet() {
-        assert_eq!(route(&request("GET", "/v1/models"), &BrainRegistry::empty()).status, 200);
-        assert_eq!(route(&request("POST", "/v1/chat/completions"), &BrainRegistry::empty()).status, 501);
+        let models = route(&request("GET", "/v1/models"), &BrainRegistry::empty());
+        assert_eq!(models.status, 200);
+        assert_eq!(models.body, r#"{"object":"list","data":[]}"#);
+
+        let completions = route(
+            &request("POST", "/v1/chat/completions"),
+            &BrainRegistry::empty(),
+        );
+        assert_eq!(completions.status, 501);
     }
 
     #[test]

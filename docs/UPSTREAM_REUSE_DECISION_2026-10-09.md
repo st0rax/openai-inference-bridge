@@ -18,25 +18,25 @@ Reviewed upstream revision: `st0rax/webagent-rs@a6693dcc8095b3306a11593a216741f8
 
 | Source path / area | Decision | Reason and constraints |
 |---|---|---|
-| `src/api_bridge.rs` | **Reuse through public library API for prototype; do not copy** | Composition root owns DTOs, server, limits, routes, image/audio handlers and session integration. It is not a standalone source file. |
-| `src/api_bridge/boundary.rs` | **Reuse as part of upstream API; port tests if extracting** | Auth and error mapping are useful. Keep bearer token secret, timing-aware comparison and fail-closed behavior. |
+| `src/api_bridge.rs` | **Do not use as core; evaluate only as behavioral reference** | Composition root owns DTOs, server, limits, routes, image/audio handlers and session integration. It is not a standalone source file. |
+| `src/api_bridge/boundary.rs` | **Candidate behavior only; evaluate individually** | Auth and error mapping are useful. Keep bearer token secret, timing-aware comparison and fail-closed behavior. |
 | `src/api_bridge/transport.rs` | **Do not copy into a new server** | Bespoke blocking HTTP parser with narrow framing support. If a fresh HTTP layer is eventually built, use a maintained HTTP framework and port boundary tests. |
-| `src/api_bridge/wire.rs` | **Reuse upstream for prototype; later adapt semantics** | HTTP/SSE formatting and Responses event sequencing are already centralized; use framework streaming primitives if the API layer is rewritten. |
+| `src/api_bridge/wire.rs` | **Candidate behavior only; evaluate individually** | HTTP/SSE formatting and Responses event sequencing are already centralized; use framework streaming primitives if the API layer is rewritten. |
 | `src/api_bridge/routing.rs` | **Port small logic only if extracting** | Clear method/path routing policy; simple to test, but not worth maintaining a duplicate while calling the upstream server. |
-| `src/api_bridge/provider_handlers.rs` | **Reuse upstream for prototype; port behavior/tests, not file verbatim** | Contains valuable OpenAI/Anthropic/Responses handling but depends on many parent-level types and helpers. |
+| `src/api_bridge/provider_handlers.rs` | **Candidate behavior only; evaluate individually** | Contains valuable OpenAI/Anthropic/Responses handling but depends on many parent-level types and helpers. |
 | `src/api_bridge/content.rs` | **Port behavior/tests only if extracting** | Message/content normalization, tool schema and media decoding; needs new internal types and explicit unknown-field policy. |
-| `src/api_bridge/inference.rs` | **Reuse upstream for prototype; retain adapter concept** | Per-Brain serialization and single-turn calls are key invariants. Includes upstream AutoRouter/timeouts and test double. |
+| `src/api_bridge/inference.rs` | **Candidate behavior only; evaluate individually** | Per-Brain serialization and single-turn calls are key invariants. Includes upstream AutoRouter/timeouts and test double. |
 | `src/api_bridge/catalog.rs` | **Replace with a configuration-driven registry in this app if a separate API layer is built** | Hard-coded Brain IDs, AutoRouter preferences and modality declarations are upstream-specific. Capabilities should be explicit and evidence-based. |
-| `src/api_bridge/response_protocol.rs` | **Reuse upstream for prototype; port only the formats we promise** | Response serialization is useful, but Responses has known state/field discrepancies documented in the audit. |
+| `src/api_bridge/response_protocol.rs` | **Candidate behavior only; evaluate individually** | Response serialization is useful, but Responses has known state/field discrepancies documented in the audit. |
 | `src/api_bridge/store.rs` | **Defer in MVP; do not copy** | Responses persistence is not required for Chat Completions. Source persists JSON to disk while docs say memory-only; response `store` is hardcoded true. Resolve before reuse. |
 | `src/api_bridge/tests.rs` | **Port selected tests and fixtures during extraction** | Strong behavioral inventory, but test module is coupled to parent private types. Tests were inspected, not executed in this audit. |
 | `src/brain.rs` | **Preserve as conceptual contract; do not copy alone** | `BrainBackend` is a good lifecycle abstraction but does not implement a runtime by itself. |
-| `src/browser_inference.rs` | **Reuse via dependency for prototype; likely long-term adapter boundary** | Normalized request/result, attachment validation, streaming and internal tool envelope. Still depends on relay, observer and diagnostic modules. |
-| `src/relay.rs` | **Reuse via dependency; do not copy** | Owns turn retries, timeouts, circuit breaker, scoring, proof and diagnostic integration. Extraction would need dependency reduction. |
-| `src/browser/mod.rs`, `src/browser/backend.rs` | **Reuse via dependency; do not copy** | Concrete Brain implementation depends on selectors, configuration, WebView, profile pool, observer and UI operations. |
-| `src/browser_pool.rs` | **Reuse via dependency; do not copy** | Shared runtime, tab refs, fallback profiles, cleanup and UI-window integration form a subsystem. |
-| `src/webview_runtime.rs`, `src/page_driver.rs` | **Reuse via dependency; do not copy** | WebView thread/event-loop and platform-specific page driver are critical runtime components, not API glue. |
-| `src/config/brains.rs`, `src/config/profiles.rs`, related config | **Reuse via dependency for prototype; isolate root explicitly** | Brain registry, selectors, profile directories, profile cloning and write-back. Profiles contain authenticated session secrets. |
+| `src/browser_inference.rs` | **Candidate behavior only; evaluate individually** | Normalized request/result, attachment validation, streaming and internal tool envelope. Still depends on relay, observer and diagnostic modules. |
+| `src/relay.rs` | **Candidate behavior only; evaluate individually** | Owns turn retries, timeouts, circuit breaker, scoring, proof and diagnostic integration. Extraction would need dependency reduction. |
+| `src/browser/mod.rs`, `src/browser/backend.rs` | **Candidate behavior only; evaluate individually** | Concrete Brain implementation depends on selectors, configuration, WebView, profile pool, observer and UI operations. |
+| `src/browser_pool.rs` | **Candidate behavior only; evaluate individually** | Shared runtime, tab refs, fallback profiles, cleanup and UI-window integration form a subsystem. |
+| `src/webview_runtime.rs`, `src/page_driver.rs` | **Candidate behavior only; evaluate individually** | WebView thread/event-loop and platform-specific page driver are critical runtime components, not API glue. |
+| `src/config/brains.rs`, `src/config/profiles.rs`, related config | **Candidate behavior only; evaluate individually** | Brain registry, selectors, profile directories, profile cloning and write-back. Profiles contain authenticated session secrets. |
 | `src/session.rs`, `src/observer.rs`, `src/timeouts.rs`, `src/circuit_breaker.rs`, `src/bench_events.rs`, `src/brain_score.rs`, `src/capability_proof.rs` | **Transitive runtime dependencies; keep behind the library for prototype** | Do not selectively copy without defining replacements and the complete dependency closure. |
 | `src/main.rs`, CLI/TUI, agent controller, executor, shell policy, `webagent/1`, workers, benchmark/research UI | **Exclude from this app's product boundary** | The inference bridge must not become an agent harness or local tool executor. The upstream crate may compile these modules because its library surface is broad, but the wrapper must not invoke them. |
 | `docs/API_BRIDGE.md`, `docs/API_BRIDGE_ARCHITECTURE.md` | **Use as evidence sources, reconcile with source** | Docs contain useful operational and compatibility notes but at least one Responses storage discrepancy exists. Source code at the pinned revision is authoritative for implementation behavior. |
@@ -58,16 +58,13 @@ This repository owns the API contract, routes, model discovery, auth, error mapp
 
 ## Isolation requirement: `WEBAGENT_ROOT`
 
-The upstream path resolver defaults to a stable `webagent` data root (for example `%LOCALAPPDATA%\\webagent` on Windows) and stores profiles under that root. If the wrapper leaves this default unchanged, it may reuse the existing WebAgent installation's profiles and authenticated sessions.
-
-Set `WEBAGENT_ROOT` to a dedicated application-data directory **before any upstream configuration/runtime calls** (for example an app-specific directory under the user's local application data). Sharing an existing profile should be an explicit opt-in, not an accidental default. Never put profile contents under the repository, the build output, a public artifact or CI cache.
+If an individually approved component uses upstream profile/path resolution, evaluate its exact behavior and ensure it cannot reuse an existing WebAgent profile implicitly. Set any required app-specific data root before that component initializes. Sharing an existing profile must be an explicit opt-in. Never put profile contents under the repository, build output, a public artifact or CI cache.
 
 ## Compatibility and product scope
 
 - Start with `GET /v1/models` and `POST /v1/chat/completions`, including tested text SSE.
 - The upstream server currently exposes additional Responses, Anthropic, Images and Audio routes when `serve` is called. Their existence must not be represented as full compatibility; see the audit docs for field and state limitations.
-- The direct public `serve` entry point is API-only. The upstream CLI documentation describes a combined UI/API mode, but the new wrapper should not silently invoke the upstream CLI/TUI. A minimal operator/test console can be implemented separately after the API path is proven.
-- If the wrapper needs to restrict endpoints to the committed product subset, it needs an explicit route policy/proxy or a future upstream API configuration hook. Do not imply the public `serve` function supports per-route disablement unless verified.
+- Existing upstream API-bridge route behavior is useful as a source-audit reference only; this repository must implement and test its own route policy. Do not invoke the upstream API server or CLI/TUI as the product core.
 
 ## Required gates before runtime implementation
 

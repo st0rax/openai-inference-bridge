@@ -10,10 +10,7 @@ use std::time::{Duration, Instant};
 
 use crate::{
     api_error::ApiError,
-    brain_backend::{
-        BackendError, BrainBackend, BrowserBrainBackend, CancellationToken, InferenceRequest,
-        Readiness,
-    },
+    brain_backend::{BrainBackend, BrowserBrainBackend, CancellationToken, InferenceRequest},
     brain_manager::BrainManager,
     brain_registry::BrainRegistry,
     browser_driver::BrowserCdpDriver,
@@ -527,6 +524,7 @@ fn write_response(stream: &mut impl Write, response: &Response) -> io::Result<()
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::brain_backend::{BackendError, BackendEvent, Readiness};
     use std::env;
     use std::io::Cursor;
 
@@ -584,7 +582,7 @@ mod tests {
             request: &InferenceRequest,
             event_sink: &mut dyn FnMut(crate::brain_backend::BackendEvent),
         ) -> Result<String, BackendError> {
-            event_sink(crate::brain_backend::BackendEvent::AssistantTextSnapshot(
+            event_sink(BackendEvent::AssistantTextSnapshot(
                 "fake reply".to_owned(),
             ));
             Ok(format!("fake reply for {}", request.prompt))

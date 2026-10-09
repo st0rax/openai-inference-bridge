@@ -119,6 +119,7 @@ pub trait BrainBackend {
     fn shutdown(&mut self) -> Result<(), BackendError>;
 }
 
+#[derive(Debug)]
 pub struct BrowserBrainBackend<D: BrowserPageDriver> {
     brain_id: String,
     start_url: String,
@@ -195,10 +196,7 @@ impl<D: BrowserPageDriver> BrowserBrainBackend<D> {
                 BackendErrorKind::LoginRequired,
                 "provider login is required",
             ),
-            Readiness::Challenge => (
-                BackendErrorKind::Challenge,
-                "provider challenge detected",
-            ),
+            Readiness::Challenge => (BackendErrorKind::Challenge, "provider challenge detected"),
             Readiness::RateLimited => (
                 BackendErrorKind::RateLimited,
                 "provider rate limit detected",
@@ -322,6 +320,7 @@ mod tests {
     use std::collections::VecDeque;
     use std::time::Duration;
 
+    #[derive(Debug)]
     struct FakeDriver {
         readiness: Readiness,
         snapshots: VecDeque<TextSnapshot>,
@@ -408,7 +407,9 @@ mod tests {
             },
         ]);
         let mut backend = BrowserBrainBackend::new(&brain(), driver).unwrap();
-        backend.start(Instant::now() + Duration::from_secs(1)).unwrap();
+        backend
+            .start(Instant::now() + Duration::from_secs(1))
+            .unwrap();
         let request = request(CancellationToken::default());
         let mut events = Vec::new();
         let result = backend
@@ -431,7 +432,9 @@ mod tests {
         let mut driver = FakeDriver::ready_with(Vec::new());
         driver.readiness = Readiness::LoginRequired;
         let mut backend = BrowserBrainBackend::new(&brain(), driver).unwrap();
-        backend.start(Instant::now() + Duration::from_secs(1)).unwrap();
+        backend
+            .start(Instant::now() + Duration::from_secs(1))
+            .unwrap();
 
         let error = backend
             .infer(&request(CancellationToken::default()), &mut |_| {})
@@ -443,7 +446,9 @@ mod tests {
     fn cancellation_and_deadline_are_checked_before_submission() {
         let mut backend =
             BrowserBrainBackend::new(&brain(), FakeDriver::ready_with(Vec::new())).unwrap();
-        backend.start(Instant::now() + Duration::from_secs(1)).unwrap();
+        backend
+            .start(Instant::now() + Duration::from_secs(1))
+            .unwrap();
 
         let cancellation = CancellationToken::default();
         cancellation.cancel();
@@ -468,7 +473,9 @@ mod tests {
             complete: true,
         }]);
         let mut backend = BrowserBrainBackend::new(&brain(), driver).unwrap();
-        backend.start(Instant::now() + Duration::from_secs(1)).unwrap();
+        backend
+            .start(Instant::now() + Duration::from_secs(1))
+            .unwrap();
         let error = backend
             .infer(&request(CancellationToken::default()), &mut |_| {})
             .unwrap_err();

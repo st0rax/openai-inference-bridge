@@ -10,13 +10,15 @@ use std::time::{Duration, Instant};
 
 use crate::{
     api_error::ApiError,
-    brain_backend::{BackendError, BackendErrorKind, BrainBackend, BrowserPageDriver, CancellationToken, InferenceRequest, Readiness},
+    brain_backend::{
+        BackendError, BrainBackend, BrowserBrainBackend, CancellationToken, InferenceRequest,
+        Readiness,
+    },
     brain_manager::BrainManager,
     brain_registry::BrainRegistry,
     browser_driver::BrowserCdpDriver,
     chat_completion::{completion_response_json, normalize_request},
     config::Config,
-    brain_backend::BrowserBrainBackend,
 };
 
 const MAX_HEADER_BYTES: usize = 16 * 1024;

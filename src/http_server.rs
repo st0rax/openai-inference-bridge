@@ -242,9 +242,9 @@ fn read_request(reader: &mut impl Read) -> io::Result<Request> {
                 "obsolete folded headers are not supported",
             ));
         }
-        let (name, value) = line.split_once(':').ok_or_else(|| {
-            io::Error::new(io::ErrorKind::InvalidData, "malformed HTTP header")
-        })?;
+        let (name, value) = line
+            .split_once(':')
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "malformed HTTP header"))?;
         if name.is_empty() || !name.bytes().all(is_header_name_char) {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,

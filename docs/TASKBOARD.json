@@ -278,12 +278,12 @@
       "area": "Architecture",
       "title": "Define per-Brain capability declarations",
       "type": "design",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "design/P-022-brain-capabilities",
       "claimed_at": "2026-10-09",
-      "done_at": null,
-      "proof_path": null,
+      "done_at": "2026-10-09",
+      "proof_path": "docs/BRAIN_CAPABILITIES.md",
       "dod": "Define per-Brain capability declarations is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [
         "P-020"

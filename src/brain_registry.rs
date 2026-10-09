@@ -236,7 +236,7 @@ fn valid_start_url(url: &str) -> bool {
         return false;
     }
 
-    let (host, port) = if authority.starts_with('[') {
+    let (host, port, is_ipv6) = if authority.starts_with('[') {
         let Some(close) = authority.find(']') else {
             return false;
         };
@@ -252,23 +252,26 @@ fn valid_start_url(url: &str) -> bool {
         } else {
             return false;
         };
-        (host, port)
+        (host, port, true)
     } else if let Some((host, port)) = authority.rsplit_once(':') {
         if host.contains(':') {
             return false;
         }
-        (host, Some(port))
+        (host, Some(port), false)
     } else {
-        (authority, None)
+        (authority, None, false)
     };
 
     if let Some(port) = port {
-        if port.is_empty() || port.parse::<u16>().is_err_and(|_| true) || port == "0" {
+        let Ok(port_number) = port.parse::<u16>() else {
+            return false;
+        };
+        if port_number == 0 {
             return false;
         }
     }
 
-    if host.parse::<std::net::Ipv4Addr>().is_ok() {
+    if is_ipv6 || host.parse::<std::net::Ipv4Addr>().is_ok() {
         return true;
     }
 

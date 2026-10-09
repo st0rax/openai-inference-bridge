@@ -113,17 +113,7 @@ fn validate_bind(bind_addr: SocketAddr) -> io::Result<()> {
 
 fn handle_connection(stream: &mut TcpStream, expected_token: &str) -> io::Result<()> {
     let response = match read_request(stream) {
-        Ok(request) if !is_authorized(request.authorization.as_deref(), expected_token) => {
-            Response {
-                www_authenticate: Some("Bearer"),
-                ..Response::new(
-                    401,
-                    "Unauthorized",
-                    r#"{"error":{"type":"authentication_error","message":"Missing or invalid bearer token"}}"#,
-                )
-            }
-        }
-        Ok(request) => route(&request),
+        Ok(request) => dispatch(&request, expected_token),
         Err(error)
             if error.kind() == io::ErrorKind::TimedOut
                 || error.kind() == io::ErrorKind::WouldBlock =>
@@ -141,6 +131,20 @@ fn handle_connection(stream: &mut TcpStream, expected_token: &str) -> io::Result
         ),
     };
     write_response(stream, &response)
+}
+
+fn dispatch(request: &Request, expected_token: &str) -> Response {
+    if !is_authorized(request.authorization.as_deref(), expected_token) {
+        return Response {
+            www_authenticate: Some("Bearer"),
+            ..Response::new(
+                401,
+                "Unauthorized",
+                r#"{"error":{"type":"authentication_error","message":"Missing or invalid bearer token"}}"#,
+            )
+        };
+    }
+    route(request)
 }
 
 fn is_authorized(header: Option<&str>, expected_token: &str) -> bool {
@@ -347,6 +351,18 @@ mod tests {
         let lowercase_header = format!("bearer {TOKEN}");
         assert!(is_authorized(Some(&valid_header), TOKEN));
         assert!(is_authorized(Some(&lowercase_header), TOKEN));
+    }
+
+    #[test]
+    fn authentication_runs_before_route_dispatch() {
+        let request = request("GET", "/v1/models");
+        let unauthorized = dispatch(&request, TOKEN);
+        assert_eq!(unauthorized.status, 401);
+        assert_eq!(unauthorized.www_authenticate, Some("Bearer"));
+
+        let mut authorized_request = request;
+        authorized_request.authorization = Some(format!("Bearer {TOKEN}"));
+        assert_eq!(dispatch(&authorized_request, TOKEN).status, 501);
     }
 
     #[test]

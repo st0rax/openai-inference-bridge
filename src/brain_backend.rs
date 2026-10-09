@@ -105,7 +105,7 @@ pub trait BrowserPageDriver: Send {
         cancellation: &CancellationToken,
     ) -> Result<Option<TextSnapshot>, BackendError>;
 
-    fn shutdown(&mut self) -> Result<(), BackendError>;
+    fn shutdown(&mut self, deadline: Instant) -> Result<(), BackendError>;
 }
 
 pub trait BrainBackend: Send {
@@ -295,11 +295,15 @@ impl<D: BrowserPageDriver> BrainBackend for BrowserBrainBackend<D> {
         }
     }
 
-    fn shutdown(&mut self) -> Result<(), BackendError> {
+    fn shutdown(&mut self, deadline: Instant) -> Result<(), BackendError> {
         if !self.start_attempted && !self.shutdown_failed {
             return Ok(());
         }
-        match self.driver.shutdown() {
+        if let Err(error) = Self::check_deadline(deadline) {
+            self.shutdown_failed = true;
+            return Err(error);
+        }
+        match self.driver.shutdown(deadline) {
             Ok(()) => {
                 self.started = false;
                 self.start_attempted = false;
@@ -369,7 +373,7 @@ mod tests {
             Ok(self.snapshots.pop_front())
         }
 
-        fn shutdown(&mut self) -> Result<(), BackendError> {
+        fn shutdown(&mut self, _deadline: Instant) -> Result<(), BackendError> {
             self.shutdown = true;
             Ok(())
         }
@@ -423,7 +427,9 @@ mod tests {
             backend.driver.submitted.as_deref(),
             Some("preserve all conversation context")
         );
-        backend.shutdown().unwrap();
+        backend
+            .shutdown(Instant::now() + Duration::from_secs(1))
+            .unwrap();
         assert!(backend.driver.shutdown);
     }
 

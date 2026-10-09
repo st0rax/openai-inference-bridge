@@ -433,6 +433,7 @@ fn write_response(stream: &mut impl Write, response: &Response) -> io::Result<()
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
     use std::io::Cursor;
 
     const TOKEN: &str = "test-token-that-is-at-least-32-characters";
@@ -447,17 +448,52 @@ mod tests {
         }
     }
 
+    fn chat_request(body: &[u8]) -> Request {
+        let mut request = request("POST", "/v1/chat/completions");
+        request.content_type = Some("application/json".to_owned());
+        request.body = body.to_vec();
+        request
+    }
+
+    fn configured_registry() -> BrainRegistry {
+        let data_dir = env::temp_dir().to_string_lossy().into_owned();
+        let config = Config::from_lookup(|key| match key {
+            "OIB_API_TOKEN" => Some(TOKEN.to_owned()),
+            "OIB_DATA_DIR" => Some(data_dir.clone()),
+            _ => None,
+        })
+        .unwrap();
+        BrainRegistry::from_lookup(&config, |key| match key {
+            "OIB_BRAIN_IDS" => Some("chatgpt".to_owned()),
+            "OIB_BRAIN_CHATGPT_ENABLED" => Some("1".to_owned()),
+            "OIB_BRAIN_CHATGPT_LABEL" => Some("ChatGPT".to_owned()),
+            "OIB_BRAIN_CHATGPT_URL" => Some("https://chatgpt.com/".to_owned()),
+            "OIB_BRAIN_CHATGPT_ADAPTER" => Some("chatgpt-web".to_owned()),
+            _ => None,
+        })
+        .unwrap()
+    }
+
     #[test]
-    fn model_list_is_implemented_and_chat_completions_is_not_yet() {
+    fn model_list_is_implemented_and_chat_route_validates_requests() {
         let models = route(&request("GET", "/v1/models"), &BrainRegistry::empty());
         assert_eq!(models.status, 200);
         assert_eq!(models.body, r#"{"object":"list","data":[]}"#);
 
-        let completions = route(
+        let missing_content_type = route(
             &request("POST", "/v1/chat/completions"),
             &BrainRegistry::empty(),
         );
-        assert_eq!(completions.status, 501);
+        assert_eq!(missing_content_type.status, 415);
+
+        let body = br#"{"model":"oib/chatgpt","messages":[{"role":"user","content":"hi"}]}"#;
+        let missing_model = route(&chat_request(body), &BrainRegistry::empty());
+        assert_eq!(missing_model.status, 404);
+        assert!(missing_model.body.contains("model_not_found"));
+
+        let configured_but_unavailable = route(&chat_request(body), &configured_registry());
+        assert_eq!(configured_but_unavailable.status, 503);
+        assert!(configured_but_unavailable.body.contains("brain_runtime_unavailable"));
     }
 
     #[test]
@@ -523,6 +559,29 @@ mod tests {
         let request = read_request(&mut Cursor::new(bytes)).unwrap();
         let expected = format!("Bearer {TOKEN}");
         assert_eq!(request.authorization.as_deref(), Some(expected.as_str()));
+    }
+
+    #[test]
+    fn reads_content_length_and_json_body() {
+        let body = r#"{"model":"oib/chatgpt","messages":[{"role":"user","content":"hi"}]}"#;
+        let request_text = format!(
+            "POST /v1/chat/completions HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
+            body.len(),
+            body
+        );
+        let request = read_request(&mut Cursor::new(request_text)).unwrap();
+        assert_eq!(request.content_type.as_deref(), Some("application/json"));
+        assert_eq!(request.body, body.as_bytes());
+    }
+
+    #[test]
+    fn rejects_oversized_request_body_before_reading_it() {
+        let request_text = format!(
+            "POST /v1/chat/completions HTTP/1.1\r\nContent-Length: {}\r\n\r\n",
+            MAX_BODY_BYTES + 1
+        );
+        let error = read_request(&mut Cursor::new(request_text)).unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::FileTooLarge);
     }
 
     #[test]

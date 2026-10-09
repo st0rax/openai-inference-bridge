@@ -92,7 +92,7 @@ impl BrowserCdpDriver {
         ))
     }
 
-    fn wait_for_debugger(&mut self, port: u16, deadline: Instant) -> Result<String, BackendError> {
+    fn wait_for_debugger(&mut self, port: u16, deadline: Instant) -> Result<(), BackendError> {
         loop {
             ensure_before_deadline(deadline)?;
             if let Some(child) = self.child.as_mut() {
@@ -105,10 +105,8 @@ impl BrowserCdpDriver {
             }
 
             let attempt_deadline = (Instant::now() + Duration::from_millis(250)).min(deadline);
-            if let Ok(version) = http_json(port, "GET", "/json/version", attempt_deadline) {
-                if let Some(url) = string_field(&version, "webSocketDebuggerUrl") {
-                    return Ok(url.to_owned());
-                }
+            if http_json(port, "GET", "/json/version", attempt_deadline).is_ok() {
+                return Ok(());
             }
             sleep_until(deadline, Duration::from_millis(50))?;
         }
@@ -189,7 +187,7 @@ impl BrowserPageDriver for BrowserCdpDriver {
 
         let port = free_loopback_port()?;
         self.child = Some(self.launch_browser(profile_dir, port)?);
-        let websocket_url = self.wait_for_debugger(port, deadline)?;
+        self.wait_for_debugger(port, deadline)?;
         let target = http_json(port, "PUT", "/json/new?about:blank", deadline)?;
         let target_websocket = string_field(&target, "webSocketDebuggerUrl")
             .ok_or_else(|| browser_unavailable("DevTools target did not return a WebSocket URL"))?;
@@ -199,7 +197,6 @@ impl BrowserPageDriver for BrowserCdpDriver {
         let params = format!(r#"{{"url":{}}}"#, json::quote_string(start_url));
         let _navigation = cdp.call("Page.navigate", &params, deadline)?;
         self.cdp = Some(cdp);
-        let _ = websocket_url;
         self.baseline_count = 0;
         self.baseline_last_text.clear();
         self.last_candidate.clear();
@@ -329,6 +326,7 @@ impl BrowserPageDriver for BrowserCdpDriver {
                     .stdout(Stdio::null())
                     .stderr(Stdio::null())
                     .status();
+                let _kill = self.child.as_mut().map(Child::kill);
             }
             #[cfg(not(windows))]
             {
@@ -483,7 +481,10 @@ fn read_http_head(stream: &mut TcpStream, deadline: Instant) -> Result<Vec<u8>, 
         match stream.read(&mut byte) {
             Ok(0) => return Err(browser_unavailable("DevTools closed the HTTP response early")),
             Ok(_) => head.push(byte[0]),
-            Err(error) if error.kind() == io::ErrorKind::TimedOut => {
+            Err(error)
+                if error.kind() == io::ErrorKind::TimedOut
+                    || error.kind() == io::ErrorKind::WouldBlock =>
+            {
                 return Err(BackendError::new(
                     BackendErrorKind::Timeout,
                     "DevTools HTTP operation timed out",
@@ -734,7 +735,9 @@ impl CdpClient {
             .set_read_timeout(Some(remaining(deadline)?))
             .map_err(|_| browser_unavailable("could not configure WebSocket read timeout"))?;
         self.stream.read_exact(buffer).map_err(|error| {
-            if error.kind() == io::ErrorKind::TimedOut {
+            if error.kind() == io::ErrorKind::TimedOut
+                || error.kind() == io::ErrorKind::WouldBlock
+            {
                 BackendError::new(BackendErrorKind::Timeout, "DevTools read timed out")
             } else {
                 browser_unavailable("DevTools WebSocket read failed")

@@ -90,7 +90,10 @@ pub fn run(bind_addr: SocketAddr) -> io::Result<()> {
     for incoming in listener.incoming() {
         match incoming {
             Ok(mut stream) => {
-                let _ = stream.set_read_timeout(Some(READ_TIMEOUT));
+                if let Err(error) = stream.set_read_timeout(Some(READ_TIMEOUT)) {
+                    eprintln!("failed to set HTTP read timeout: {error}");
+                    continue;
+                }
                 if let Err(error) = handle_connection(&mut stream) {
                     eprintln!("HTTP connection ended: {error}");
                 }

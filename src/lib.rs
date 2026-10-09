@@ -4,6 +4,7 @@
 
 pub mod api_error;
 pub mod brain_backend;
+pub mod brain_manager;
 pub mod brain_registry;
 pub mod chat_completion;
 pub mod config;

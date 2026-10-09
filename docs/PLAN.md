@@ -29,9 +29,10 @@ Task dependencies are authoritative in `docs/TASKBOARD.json`.
 
 ## Status handover — 2026-10-09
 
-- **Done:** repository bootstrap and planning; source-level audits for API bridge modules, Brain lifecycle, inference/streaming, Chat Completions, Responses API, media capabilities, and the file-level reuse decision; integration strategy and acceptance gates.
+- **Verified:** Rust scaffold and CI; GitHub Actions passed formatting, Clippy, and tests on Ubuntu and Windows. Safe environment-based configuration, token redaction, loopback-first binding, remote opt-in, per-user data paths, and Brain profile path validation are implemented.
+- **Documented:** independent BrainBackend contract, model ID and registry policy, capability declarations, normalized request/events, conversation state, configuration, and secret handling.
+- **Not implemented:** HTTP server/routes, request authentication, structured API errors, model registry code, `/v1/models`, Chat Completions, and browser runtime.
 - **Binding decision:** implement the OpenAI-compatible API and internal Brain contract in this repository. Do not use WebAgent's public API bridge as the core. Evaluate every candidate upstream component individually before any reuse or dependency adoption.
-- **Next:** document and perform component-by-component evaluation before runtime implementation; in parallel, independent workspace/API foundation work may proceed where dependencies permit.
-- **Not verified:** no clean Cargo build, upstream tests, live browser turn, or client compatibility test has been run from this new repository.
+- **Next:** implement HTTP routing, then authentication/errors and model discovery; follow with normalized non-streaming Chat Completions. In parallel, test a minimal project-owned WebView runtime with an app-owned disposable profile.
 
-See [the detailed status handover](STATUS_2026-10-09.md) and the audit reports linked there.
+See [the detailed status handover](STATUS_2026-10-09.md), [configuration reference](CONFIGURATION.md), and [secret-handling policy](CONFIGURATION_AND_SECRETS.md).

@@ -118,11 +118,11 @@
       "area": "Upstream audit",
       "title": "Trace BrainBackend and browser lifecycle",
       "type": "research",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "research/P-011-brain-runtime-audit",
       "claimed_at": "2026-10-09",
-      "done_at": null,
+      "done_at": "2026-10-09",
       "proof_path": "docs/BRAIN_RUNTIME_AUDIT_2026-10-09.md",
       "dod": "Trace BrainBackend and browser lifecycle is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [

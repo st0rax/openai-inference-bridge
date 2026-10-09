@@ -936,12 +936,12 @@
       "area": "Project tracking",
       "title": "Synchronize status and handover documentation",
       "type": "docs",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "docs/P-019-status-sync-refresh",
       "claimed_at": "2026-10-09",
-      "done_at": null,
-      "proof_path": null,
+      "done_at": "2026-10-09",
+      "proof_path": "README.md; docs/STATUS_2026-10-09.md; docs/PLAN.md",
       "dod": "Current project state, verified audit completion, outstanding validation, and next steps are consistent across README, plan, status handover, and taskboard.",
       "depends_on": [
         "P-018"

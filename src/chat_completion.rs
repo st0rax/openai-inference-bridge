@@ -1,5 +1,8 @@
 //! Request validation and normalization for non-streaming Chat Completions.
 
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use crate::{
     api_error::ApiError,
     json::{self, JsonValue},
@@ -36,6 +39,23 @@ pub struct ChatMessage {
 pub struct NormalizedChatRequest {
     pub model_id: String,
     pub messages: Vec<ChatMessage>,
+}
+
+static RESPONSE_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+pub fn completion_response_json(model_id: &str, content: &str) -> String {
+    let created = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let counter = RESPONSE_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let id = format!("chatcmpl-{created}-{counter}");
+    format!(
+        r#"{{"id":{},"object":"chat.completion","created":{created},"model":{},"choices":[{{"index":0,"message":{{"role":"assistant","content":{}}},"finish_reason":"stop"}}],"usage":null}}"#,
+        json::quote_string(&id),
+        json::quote_string(model_id),
+        json::quote_string(content)
+    )
 }
 
 impl NormalizedChatRequest {
@@ -242,6 +262,19 @@ mod tests {
             request.compose_prompt(),
             "System instruction:\nBe concise\n\nUser:\nFirst question\n\nAssistant:\nFirst answer\n\nUser:\nSecond question\n\nRespond to the final user message."
         );
+    }
+
+    #[test]
+    fn completion_response_uses_openai_shape_and_escapes_text() {
+        let response = completion_response_json("oib/chatgpt", "hello \"world\"\nnext");
+        let value = json::parse(&response).unwrap();
+        let object = value.as_object().unwrap();
+        assert_eq!(object["object"].as_str(), Some("chat.completion"));
+        assert_eq!(object["model"].as_str(), Some("oib/chatgpt"));
+        let choice = &object["choices"].as_array().unwrap()[0];
+        let message = choice.as_object().unwrap()["message"].as_object().unwrap();
+        assert_eq!(message["content"].as_str(), Some("hello \"world\"\nnext"));
+        assert_eq!(object["usage"], JsonValue::Null);
     }
 
     #[test]

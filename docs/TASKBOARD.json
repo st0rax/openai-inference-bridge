@@ -964,6 +964,27 @@
         "P-017",
         "P-018"
       ]
+    },
+    {
+      "id": "P-045",
+      "phase": "P4",
+      "area": "Browser runtime",
+      "title": "Implement isolated Chromium DevTools driver",
+      "type": "feature",
+      "status": "claimed",
+      "owner": "ChatGPT",
+      "branch": "feat/P-045-chromium-cdp-driver",
+      "claimed_at": "2026-10-09",
+      "done_at": null,
+      "proof_path": null,
+      "dod": "Implement a project-owned local Chromium/Edge DevTools driver for the configured Brain profile, with loopback-only debugging, profile locking, navigation, readiness detection, prompt submission, full-text snapshots, bounded shutdown, unit tests, and explicit live-browser verification limits.",
+      "depends_on": [
+        "P-005",
+        "P-021",
+        "P-040",
+        "P-041",
+        "P-042"
+      ]
     }
   ]
 }

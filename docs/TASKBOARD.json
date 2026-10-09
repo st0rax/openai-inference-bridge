@@ -312,12 +312,12 @@
       "area": "Architecture",
       "title": "Define persistence and conversation-state policy",
       "type": "design",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "design/P-024-conversation-state-policy",
       "claimed_at": "2026-10-09",
-      "done_at": null,
-      "proof_path": null,
+      "done_at": "2026-10-09",
+      "proof_path": "docs/CONVERSATION_STATE_POLICY.md",
       "dod": "Define persistence and conversation-state policy is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [
         "P-023"

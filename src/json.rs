@@ -59,6 +59,40 @@ impl JsonValue {
             _ => None,
         }
     }
+
+    pub fn as_u64(&self) -> Option<u64> {
+        match self {
+            Self::Number(value) => value.parse().ok(),
+            _ => None,
+        }
+    }
+}
+
+/// Encode a Rust string as one valid JSON string literal.
+pub fn quote_string(value: &str) -> String {
+    let mut output = String::with_capacity(value.len() + 2);
+    output.push('"');
+    for character in value.chars() {
+        match character {
+            '"' => output.push_str("\\\""),
+            '\\' => output.push_str("\\\\"),
+            '\n' => output.push_str("\\n"),
+            '\r' => output.push_str("\\r"),
+            '\t' => output.push_str("\\t"),
+            '\u{08}' => output.push_str("\\b"),
+            '\u{0c}' => output.push_str("\\f"),
+            character if character <= '\u{1f}' => {
+                const HEX: &[u8; 16] = b"0123456789abcdef";
+                let byte = character as u8;
+                output.push_str("\\u00");
+                output.push(HEX[(byte >> 4) as usize] as char);
+                output.push(HEX[(byte & 0x0f) as usize] as char);
+            }
+            character => output.push(character),
+        }
+    }
+    output.push('"');
+    output
 }
 
 pub fn parse(input: &str) -> Result<JsonValue, JsonError> {
@@ -355,6 +389,13 @@ mod tests {
             Some("hello 🚀")
         );
         assert_eq!(object["n"], JsonValue::Number("-1.25e2".to_owned()));
+    }
+
+    #[test]
+    fn quotes_json_strings_and_round_trips_control_characters() {
+        let original = "quote: \" slash: \\ newline:\n control:\u{0001}";
+        let quoted = quote_string(original);
+        assert_eq!(parse(&quoted).unwrap().as_str(), Some(original));
     }
 
     #[test]

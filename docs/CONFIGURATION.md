@@ -18,7 +18,7 @@ Each Brain's browser profile path is isolated below `profiles/<brain-slug>`. Slu
 
 The token is redacted from the configuration's Debug representation. Do not pass secrets as command-line arguments or log their values. A remote bind opt-in is not a substitute for TLS, firewall policy, or a security review; remote serving should remain disabled unless the deployment deliberately supplies those controls.
 
-The configuration is loaded by the initial local HTTP listener. The listener enforces bearer-token authentication. `GET /v1/models` now lists configured enabled Brains; `POST /v1/chat/completions` remains `501 Not Implemented`, and no browser runtime is connected yet.
+The configuration is loaded by the initial local HTTP listener. The listener enforces bearer-token authentication. `GET /v1/models` lists configured enabled Brains. `POST /v1/chat/completions` validates and normalizes non-streaming requests, but returns `503` for a configured model until a Brain execution backend is connected. No browser runtime is connected yet.
 
 
 

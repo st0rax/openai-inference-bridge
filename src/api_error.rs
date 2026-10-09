@@ -32,15 +32,21 @@ impl ApiError {
 
     pub fn from_backend(error: &BackendError) -> Self {
         let (status, error_type, code) = match error.kind {
-            BackendErrorKind::LoginRequired => (401, "authentication_error", "provider_login_required"),
+            BackendErrorKind::LoginRequired => {
+                (401, "authentication_error", "provider_login_required")
+            },
             BackendErrorKind::Challenge => (503, "server_error", "provider_challenge_required"),
             BackendErrorKind::RateLimited => (429, "rate_limit_error", "provider_rate_limited"),
             BackendErrorKind::Timeout => (504, "timeout_error", "brain_timeout"),
             BackendErrorKind::Cancelled => (408, "timeout_error", "request_cancelled"),
             BackendErrorKind::BrowserUnavailable => (503, "server_error", "brain_unavailable"),
-            BackendErrorKind::NavigationFailed => (502, "server_error", "browser_navigation_failed"),
+            BackendErrorKind::NavigationFailed => {
+                (502, "server_error", "browser_navigation_failed")
+            },
             BackendErrorKind::SubmissionFailed => (502, "server_error", "brain_submission_failed"),
-            BackendErrorKind::ResponseNotDetected => (502, "server_error", "brain_response_not_detected"),
+            BackendErrorKind::ResponseNotDetected => {
+                (502, "server_error", "brain_response_not_detected")
+            },
             BackendErrorKind::ExtractionFailed => (502, "server_error", "brain_extraction_failed"),
             BackendErrorKind::UnsupportedCapability => {
                 (400, "invalid_request_error", "unsupported_capability")
@@ -147,18 +153,54 @@ mod tests {
     #[test]
     fn backend_failures_map_to_stable_http_statuses_and_codes() {
         let cases = [
-            (BackendErrorKind::LoginRequired, 401, "provider_login_required"),
-            (BackendErrorKind::Challenge, 503, "provider_challenge_required"),
+            (
+                BackendErrorKind::LoginRequired,
+                401,
+                "provider_login_required",
+            ),
+            (
+                BackendErrorKind::Challenge,
+                503,
+                "provider_challenge_required",
+            ),
             (BackendErrorKind::RateLimited, 429, "provider_rate_limited"),
             (BackendErrorKind::Timeout, 504, "brain_timeout"),
             (BackendErrorKind::Cancelled, 408, "request_cancelled"),
-            (BackendErrorKind::BrowserUnavailable, 503, "brain_unavailable"),
-            (BackendErrorKind::NavigationFailed, 502, "browser_navigation_failed"),
-            (BackendErrorKind::SubmissionFailed, 502, "brain_submission_failed"),
-            (BackendErrorKind::ResponseNotDetected, 502, "brain_response_not_detected"),
-            (BackendErrorKind::ExtractionFailed, 502, "brain_extraction_failed"),
-            (BackendErrorKind::UnsupportedCapability, 400, "unsupported_capability"),
-            (BackendErrorKind::ReadinessUnknown, 503, "brain_readiness_unknown"),
+            (
+                BackendErrorKind::BrowserUnavailable,
+                503,
+                "brain_unavailable",
+            ),
+            (
+                BackendErrorKind::NavigationFailed,
+                502,
+                "browser_navigation_failed",
+            ),
+            (
+                BackendErrorKind::SubmissionFailed,
+                502,
+                "brain_submission_failed",
+            ),
+            (
+                BackendErrorKind::ResponseNotDetected,
+                502,
+                "brain_response_not_detected",
+            ),
+            (
+                BackendErrorKind::ExtractionFailed,
+                502,
+                "brain_extraction_failed",
+            ),
+            (
+                BackendErrorKind::UnsupportedCapability,
+                400,
+                "unsupported_capability",
+            ),
+            (
+                BackendErrorKind::ReadinessUnknown,
+                503,
+                "brain_readiness_unknown",
+            ),
             (BackendErrorKind::Internal, 500, "internal_error"),
         ];
         for (kind, status, code) in cases {
@@ -180,9 +222,7 @@ mod tests {
             401
         );
         assert_eq!(
-            ApiError::from_readiness(Readiness::Unknown)
-                .unwrap()
-                .status,
+            ApiError::from_readiness(Readiness::Unknown).unwrap().status,
             503
         );
     }

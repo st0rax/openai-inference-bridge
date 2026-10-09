@@ -6,16 +6,18 @@ The intended backend is a chat interface to which a user is already authenticate
 
 ## Current status
 
-**Upstream source audit complete; implementation not started.** The audit recommends testing a pinned Rust library dependency on `st0rax/webagent-rs` rather than copying its API bridge and browser runtime source files. This recommendation is not yet validated by a build or live browser test.
+**Source audits complete; implementation not started.** The earlier recommendation to use WebAgent's public API bridge is superseded. This project will implement its own OpenAI-compatible API and internal Brain interface. Every candidate WebAgent component must be evaluated individually before any source reuse or dependency adoption.
 
-Start with [the current status handover](docs/STATUS_2026-10-09.md), then read [the integration strategy](docs/INTEGRATION_STRATEGY_2026-10-09.md) and [the file-level reuse decision](docs/UPSTREAM_REUSE_DECISION_2026-10-09.md).
+Start with [the current status handover](docs/STATUS_2026-10-09.md), then read the [integration strategy](docs/INTEGRATION_STRATEGY_2026-10-09.md), [mandatory component-evaluation gate](docs/UPSTREAM_COMPONENT_EVALUATION_POLICY.md), and [file-level reuse audit](docs/UPSTREAM_REUSE_DECISION_2026-10-09.md).
 
 ## Design principles
 
 - The OpenAI-compatible API is the product boundary.
 - A Brain is a chat-interface backend exposed as a model ID.
 - Keep browser-chat execution separate from agent orchestration, shell execution, and the `webagent/1` action protocol.
-- Reuse only reviewed components; do not clone unrelated application subsystems.
+- Do not use WebAgent's public API bridge as the product core.
+- Evaluate every candidate upstream component individually before copying, adapting, or adding it as a dependency.
+- Reuse only specifically approved components; do not clone unrelated application subsystems.
 - Advertise only capabilities verified for each Brain.
 - Bind to loopback by default; require authentication for explicitly configured non-loopback exposure.
 - Tie compatibility claims to executable tests.

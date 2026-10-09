@@ -153,12 +153,12 @@
       "area": "Upstream audit",
       "title": "Audit Chat Completions compatibility",
       "type": "research",
-      "status": "free",
-      "owner": null,
-      "branch": null,
-      "claimed_at": null,
+      "status": "claimed",
+      "owner": "ChatGPT",
+      "branch": "research/P-013-chat-completions-audit",
+      "claimed_at": "2026-10-09",
       "done_at": null,
-      "proof_path": null,
+      "proof_path": "docs/CHAT_COMPLETIONS_AUDIT_2026-10-09.md",
       "dod": "Audit Chat Completions compatibility is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [
         "P-010"

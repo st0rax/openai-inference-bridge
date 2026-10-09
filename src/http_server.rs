@@ -159,7 +159,7 @@ fn dispatch(request: &Request, expected_token: &str, registry: &BrainRegistry) -
             )
         };
     }
-    route(request)
+    route(request, registry)
 }
 
 fn is_authorized(header: Option<&str>, expected_token: &str) -> bool {
@@ -339,7 +339,7 @@ mod tests {
     }
 
     #[test]
-    fn known_routes_are_explicitly_not_implemented_yet() {
+    fn model_list_is_implemented_and_chat_completions_is_not_yet() {
         assert_eq!(route(&request("GET", "/v1/models"), &BrainRegistry::empty()).status, 200);
         assert_eq!(route(&request("POST", "/v1/chat/completions"), &BrainRegistry::empty()).status, 501);
     }

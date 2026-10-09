@@ -44,7 +44,9 @@ impl Config {
         Self::from_lookup(|key| env::var(key).ok())
     }
 
-    pub(crate) fn from_lookup(mut get: impl FnMut(&str) -> Option<String>) -> Result<Self, ConfigError> {
+    pub(crate) fn from_lookup(
+        mut get: impl FnMut(&str) -> Option<String>,
+    ) -> Result<Self, ConfigError> {
         let bind_text = get("OIB_BIND").unwrap_or_else(|| DEFAULT_BIND.to_owned());
         let bind_addr: SocketAddr = bind_text.parse().map_err(|_| ConfigError::InvalidBind)?;
 

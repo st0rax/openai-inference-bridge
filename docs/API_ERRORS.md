@@ -23,7 +23,10 @@ The HTTP status is carried by the response status line, not duplicated in the JS
 | 401 | `authentication_error` | Missing or invalid bearer token |
 | 404 | `not_found_error` | Unknown route |
 | 405 | `invalid_request_error` | Known route with wrong method |
-| 408 | `timeout_error` | Request headers not received before timeout |
+| 408 | `timeout_error` | Request headers or body not received before timeout |
+| 413 | `invalid_request_error` | Request body exceeds the 1 MiB limit |
+| 415 | `invalid_request_error` | Chat Completions request is not `application/json` |
+| 503 | `server_error` | Model is configured but no execution backend is connected yet |
 | 501 | `not_implemented_error` | Placeholder inference routes |
 
 The authentication response includes `WWW-Authenticate: Bearer`; method errors include `Allow`. Responses are marked `Cache-Control: no-store`.

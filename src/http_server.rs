@@ -55,9 +55,7 @@ impl Response {
 
 fn route(request: &Request, registry: &BrainRegistry) -> Response {
     match (request.method.as_str(), request.target.as_str()) {
-        ("GET", "/v1/models") => {
-            Response::json(200, "OK", registry.models_json())
-        },
+        ("GET", "/v1/models") => Response::json(200, "OK", registry.models_json()),
         ("POST", "/v1/chat/completions") => Response::error(
             501,
             "Not Implemented",
@@ -364,7 +362,10 @@ mod tests {
 
     #[test]
     fn unknown_route_is_not_found() {
-        assert_eq!(route(&request("GET", "/private"), &BrainRegistry::empty()).status, 404);
+        assert_eq!(
+            route(&request("GET", "/private"), &BrainRegistry::empty()).status,
+            404
+        );
     }
 
     #[test]
@@ -394,7 +395,10 @@ mod tests {
 
         let mut authorized_request = request;
         authorized_request.authorization = Some(format!("Bearer {TOKEN}"));
-        assert_eq!(dispatch(&authorized_request, TOKEN, &BrainRegistry::empty()).status, 200);
+        assert_eq!(
+            dispatch(&authorized_request, TOKEN, &BrainRegistry::empty()).status,
+            200
+        );
     }
 
     #[test]

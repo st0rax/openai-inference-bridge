@@ -28,6 +28,5 @@ Task dependencies are authoritative in `docs/TASKBOARD.json`.
 
 ## Status handover
 
-- **Completed:** initial planning/bootstrap files and task graph drafted; not yet committed to a GitHub repository.
-- **Next:** `P-001` if importing this bootstrap into the new repository; then `P-010` and `P-017` before any implementation reuse.
-- **Blocked:** creating the GitHub repository itself requires a repository-creation capability not exposed by the currently available GitHub connector.
+- **Completed:** planning/bootstrap files committed to the new GitHub repository.
+- **Next:** `P-010` and `P-017` before any implementation reuse; `P-001` is now the repository baseline and should be marked done only after checking the committed tree.

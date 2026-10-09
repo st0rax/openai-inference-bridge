@@ -3,6 +3,7 @@
 //! HTTP API and browser runtime are not implemented yet.
 
 pub mod config;
+pub mod http_server;
 
 /// Package version embedded at compile time.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -116,7 +116,7 @@ pub trait BrainBackend: Send {
         request: &InferenceRequest,
         event_sink: &mut dyn FnMut(BackendEvent),
     ) -> Result<String, BackendError>;
-    fn shutdown(&mut self) -> Result<(), BackendError>;
+    fn shutdown(&mut self, deadline: Instant) -> Result<(), BackendError>;
 }
 
 #[derive(Debug)]

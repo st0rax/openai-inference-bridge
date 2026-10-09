@@ -2,7 +2,7 @@
 
 1. Read `GOALS.md`.
 2. Read `docs/PLAN.md` and `docs/WORK_CONTRACT.md`.
-3. Review `docs/UPSTREAM_REUSE.md` before implementation.
+3. Review `docs/UPSTREAM_REUSE.md` and `docs/UPSTREAM_COMPONENT_EVALUATION_POLICY.md` before implementation.
 4. Open `docs/TASKBOARD.json`; select a task whose dependencies are all `done`.
 5. Claim it with owner, branch, and timestamp before coding.
 6. Keep changes limited to the task. Add tests and evidence.

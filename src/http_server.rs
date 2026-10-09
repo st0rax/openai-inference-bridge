@@ -7,7 +7,7 @@ use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::time::Duration;
 
-use crate::config::Config;
+use crate::{api_error::ApiError, config::Config};
 
 const MAX_HEADER_BYTES: usize = 16 * 1024;
 const READ_TIMEOUT: Duration = Duration::from_secs(5);
@@ -23,17 +23,22 @@ struct Request {
 struct Response {
     status: u16,
     reason: &'static str,
-    body: &'static str,
+    body: String,
     allow: Option<&'static str>,
     www_authenticate: Option<&'static str>,
 }
 
 impl Response {
-    fn new(status: u16, reason: &'static str, body: &'static str) -> Self {
+    fn error(
+        status: u16,
+        reason: &'static str,
+        error_type: &'static str,
+        message: &'static str,
+    ) -> Self {
         Self {
             status,
             reason,
-            body,
+            body: ApiError::new(status, error_type, message).to_json(),
             allow: None,
             www_authenticate: None,
         }
@@ -42,37 +47,37 @@ impl Response {
 
 fn route(request: &Request) -> Response {
     match (request.method.as_str(), request.target.as_str()) {
-        ("GET", "/v1/models") => Response::new(
+        ("GET", "/v1/models") => Response::error(
             501,
             "Not Implemented",
-            r#"{"error":{"type":"not_implemented","message":"GET /v1/models is not implemented yet"}}"#,
+            "not_implemented_error",
+            "GET /v1/models is not implemented yet",
         ),
-        ("POST", "/v1/chat/completions") => Response::new(
+        ("POST", "/v1/chat/completions") => Response::error(
             501,
             "Not Implemented",
-            r#"{"error":{"type":"not_implemented","message":"POST /v1/chat/completions is not implemented yet"}}"#,
+            "not_implemented_error",
+            "POST /v1/chat/completions is not implemented yet",
         ),
         (_, "/v1/models") => Response {
             allow: Some("GET"),
-            ..Response::new(
+            ..Response::error(
                 405,
                 "Method Not Allowed",
-                r#"{"error":{"type":"method_not_allowed","message":"This method is not supported for /v1/models"}}"#,
+                "invalid_request_error",
+                "This method is not supported for /v1/models",
             )
         },
         (_, "/v1/chat/completions") => Response {
             allow: Some("POST"),
-            ..Response::new(
+            ..Response::error(
                 405,
                 "Method Not Allowed",
-                r#"{"error":{"type":"method_not_allowed","message":"This method is not supported for /v1/chat/completions"}}"#,
+                "invalid_request_error",
+                "This method is not supported for /v1/chat/completions",
             )
         },
-        _ => Response::new(
-            404,
-            "Not Found",
-            r#"{"error":{"type":"not_found","message":"Route not found"}}"#,
-        ),
+        _ => Response::error(404, "Not Found", "not_found_error", "Route not found"),
     }
 }
 
@@ -118,16 +123,18 @@ fn handle_connection(stream: &mut TcpStream, expected_token: &str) -> io::Result
             if error.kind() == io::ErrorKind::TimedOut
                 || error.kind() == io::ErrorKind::WouldBlock =>
         {
-            Response::new(
+            Response::error(
                 408,
                 "Request Timeout",
-                r#"{"error":{"type":"request_timeout","message":"Timed out reading request headers"}}"#,
+                "timeout_error",
+                "Timed out reading request headers",
             )
         }
-        Err(_) => Response::new(
+        Err(_) => Response::error(
             400,
             "Bad Request",
-            r#"{"error":{"type":"bad_request","message":"Malformed HTTP request"}}"#,
+            "invalid_request_error",
+            "Malformed HTTP request",
         ),
     };
     write_response(stream, &response)
@@ -137,10 +144,11 @@ fn dispatch(request: &Request, expected_token: &str) -> Response {
     if !is_authorized(request.authorization.as_deref(), expected_token) {
         return Response {
             www_authenticate: Some("Bearer"),
-            ..Response::new(
+            ..Response::error(
                 401,
                 "Unauthorized",
-                r#"{"error":{"type":"authentication_error","message":"Missing or invalid bearer token"}}"#,
+                "authentication_error",
+                "Missing or invalid bearer token",
             )
         };
     }
@@ -359,6 +367,12 @@ mod tests {
         let unauthorized = dispatch(&request, TOKEN);
         assert_eq!(unauthorized.status, 401);
         assert_eq!(unauthorized.www_authenticate, Some("Bearer"));
+        assert!(
+            unauthorized
+                .body
+                .contains("\"type\":\"authentication_error\"")
+        );
+        assert!(unauthorized.body.contains("\"param\":null,\"code\":null"));
 
         let mut authorized_request = request;
         authorized_request.authorization = Some(format!("Bearer {TOKEN}"));

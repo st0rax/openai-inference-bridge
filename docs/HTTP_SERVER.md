@@ -33,3 +33,6 @@ Responses use JSON error bodies, include a byte-accurate `Content-Length`, and c
 - Do not expose it to a network. Remote binding is explicitly refused by the runtime.
 
 The next tasks add structured API errors, model discovery, and Chat Completions. Keep the current `501` responses until each endpoint is actually implemented and tested; do not advertise a route as working merely because it appears in the route table.
+
+
+HTTP failures use the envelope defined in [API_ERRORS.md](API_ERRORS.md). This only standardizes error responses; successful inference responses and request payload parsing remain unimplemented.

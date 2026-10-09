@@ -1,7 +1,8 @@
 //! Core library for OpenAI Inference Bridge.
 //!
-//! HTTP API and browser runtime are not implemented yet.
+//! The initial HTTP listener and error envelope exist; inference endpoints and browser runtime are not implemented yet.
 
+pub mod api_error;
 pub mod config;
 pub mod http_server;
 

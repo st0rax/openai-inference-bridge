@@ -1,18 +1,18 @@
 # Upstream reuse decision — 2026-10-09
 
-- **Decision status:** recommended for prototype; dependency build/runtime spike still required.
+- **Decision status:** discovery audit complete; component-level approvals still required. The former dependency recommendation is superseded.
 - **Reviewed upstream:** [st0rax/webagent-rs](https://github.com/st0rax/webagent-rs), `master` tree `a6693dcc8095b3306a11593a216741f8a5c85a22`, package version `0.11.3`.
 - **License:** upstream repository declares MIT and includes the corresponding license text. No source files copied in this audit. Transitive dependency license closure has not been audited.
 
-## Decision
+## Superseding decision
 
-**Prototype with a pinned `webagent` library dependency and a small application wrapper. Do not copy the API bridge or browser runtime source into this repository yet.**
+**Do not use WebAgent's public API bridge as the product core or integration boundary.** Implement this repository's OpenAI-compatible HTTP API and internal Brain interface independently. Using `webagent::api_bridge::serve(BridgeConfig)` would delegate the central API-bridge behavior to upstream code and miss the project's purpose.
 
-The upstream library exposes `webagent::api_bridge::BridgeConfig` and `webagent::api_bridge::serve` publicly. The existing API bridge already provides a harness-free browser-inference path and has a tested source-level boundary. Reusing that implementation is less risky than reimplementing browser selectors, profile lifecycle, upload interactions, WebView startup, response detection and recovery.
+The existing matrix below is retained as source-discovery evidence, not blanket approval to reuse any listed file. Every candidate function/module must be evaluated individually before copying, adapting, or adopting it as a dependency. Record its exact source revision/path/symbol, purpose, call graph, dependencies, side effects, tests/limitations, security/licensing, alternatives, explicit decision, and verification plan in accordance with [the mandatory component-evaluation gate](UPSTREAM_COMPONENT_EVALUATION_POLICY.md).
 
-Pin the reviewed revision, not floating `master`. The first implementation spike should prove that the dependency builds from a clean checkout on the target OS, can load a disposable Brain profile, starts the API on loopback, and passes model-list + text-turn + streaming smoke tests. Only after this evidence should the dependency approach be treated as accepted architecture.
+Possible outcomes are narrowly adapting a proven behavior, independently reimplementing it, extracting a bounded component, or rejecting it. The public WebAgent API bridge is not an allowed core-integration option. If runtime code cannot be isolated from unrelated upstream subsystems, document that finding and design a project-owned boundary rather than copying a broad subsystem.
 
-This still produces a separate executable/repository that clients can call over the API. It does **not** mean the implementation is source-independent of WebAgent. If source-level independence becomes a hard requirement, a later extraction is needed.
+Reviewed upstream revision: `st0rax/webagent-rs@a6693dcc8095b3306a11593a216741f8a5c85a22`, package version `0.11.3`. The repository declares MIT; transitive dependency license closure remains unaudited.
 
 ## File-level decision matrix
 
@@ -42,28 +42,19 @@ This still produces a separate executable/repository that clients can call over 
 | `docs/API_BRIDGE.md`, `docs/API_BRIDGE_ARCHITECTURE.md` | **Use as evidence sources, reconcile with source** | Docs contain useful operational and compatibility notes but at least one Responses storage discrepancy exists. Source code at the pinned revision is authoritative for implementation behavior. |
 | `LICENSE` | **Retain notice if copying any substantial code** | MIT requires retaining copyright/license text. Git dependency still requires respecting the license; audit transitive dependency licenses before redistribution. |
 
-## Prototype architecture
+## Product-owned architecture
 
 ```text
 OpenAI-compatible client / harness
-  -> openai-inference-bridge executable (this repo)
-      -> local configuration + secret validation + isolated data root
-      -> pinned webagent::api_bridge::serve(BridgeConfig)
-          -> existing API handlers and SSE
-          -> existing browser_inference + relay
-          -> Brain registry, profile lifecycle and WebView runtime
+  -> this repository's HTTP/API implementation
+      -> validation, normalized request/events, auth, SSE and errors
+      -> model/Brain registry and capability declarations
+      -> project-owned BrainBackend interface
+          -> individually evaluated browser-chat components
   -> separate minimal operator/test UI in a later task
 ```
 
-The wrapper must remain thin. It should own:
-- application-specific configuration and CLI;
-- API token validation from environment (never command-line argument or committed config);
-- explicit loopback bind and selected Brain/timeout;
-- a dedicated `WEBAGENT_ROOT` default for this app;
-- startup/shutdown messaging and health/diagnostic presentation;
-- client integration smoke scripts and capability/support matrix.
-
-It must not call `AgentController`, `ShellExecutor`, autonomous loops, local tools or the `webagent/1` action protocol.
+This repository owns the API contract, routes, model discovery, auth, error mapping, streaming semantics, and compatibility tests. The browser adapter must remain narrow and use only components that have passed the individual evaluation gate. It must not call `AgentController`, `ShellExecutor`, autonomous loops, local tools or the `webagent/1` action protocol.
 
 ## Isolation requirement: `WEBAGENT_ROOT`
 
@@ -78,16 +69,16 @@ Set `WEBAGENT_ROOT` to a dedicated application-data directory **before any upstr
 - The direct public `serve` entry point is API-only. The upstream CLI documentation describes a combined UI/API mode, but the new wrapper should not silently invoke the upstream CLI/TUI. A minimal operator/test console can be implemented separately after the API path is proven.
 - If the wrapper needs to restrict endpoints to the committed product subset, it needs an explicit route policy/proxy or a future upstream API configuration hook. Do not imply the public `serve` function supports per-route disablement unless verified.
 
-## Required acceptance spike before production code
+## Required gates before runtime implementation
 
-1. Add a pinned Git dependency at `a6693dcc8095b3306a11593a216741f8a5c85a22`; build from a clean checkout on the target OS.
-2. Run `cargo fmt --all -- --check`, `cargo clippy --all-targets -- -D warnings` and tests for the wrapper; run the relevant upstream library tests.
-3. Verify the wrapper sets an app-specific `WEBAGENT_ROOT` before upstream config is initialized.
-4. Verify missing/weak API token fails startup, token never appears in logs, and only loopback binding is allowed.
-5. Start the service with a disposable authenticated Brain profile; test `/health`, `/v1/models`, one buffered text turn and a text SSE turn.
-6. Test client disconnect, shutdown, per-Brain serialization, browser login-required state and timeout behavior.
-7. Record exact OS, Rust toolchain, upstream revision, commands and redacted output in `docs/proofs/`.
-8. Decide whether the compile footprint and broad upstream library dependency are acceptable. If not, open a separate extraction design; do not start an unplanned source copy.
+1. Complete component-by-component evaluation records for the minimal browser-chat path; do not treat this source-level matrix as approval.
+2. Define the project-owned BrainBackend contract and normalized request/result/event types independently of WebAgent types.
+3. Implement the project's own minimal API slice and its request/response/SSE tests.
+4. For every approved runtime component, document its upstream revision, provenance, dependency closure, licensing, and project-local tests.
+5. Verify profile isolation, secret handling, loopback/auth policy, shutdown, cancellation, login-required state and timeout behavior.
+6. Run a live browser test with a disposable profile only after the relevant component evaluations and security review pass.
+7. Record exact OS, Rust toolchain, source revision, commands and redacted output in `docs/proofs/`.
+8. If a required component cannot be isolated safely, stop and design a project-owned replacement boundary rather than adopting the public API bridge or copying a broad subsystem.
 
 ## Evidence links
 
@@ -100,4 +91,4 @@ Set `WEBAGENT_ROOT` to a dedicated application-data directory **before any upstr
 
 ## Status
 
-This is a source-based architecture recommendation, not a verified build or runtime result. The pinned-dependency spike remains the next gate.
+This is a source-based discovery audit, not a verified build or runtime result. The public-API dependency recommendation has been superseded. Individual component approvals and all build/live-browser/client tests remain outstanding.

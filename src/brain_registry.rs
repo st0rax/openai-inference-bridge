@@ -86,7 +86,7 @@ impl BrainRegistry {
         Self::from_lookup(config, |key| env::var(key).ok())
     }
 
-    fn from_lookup(
+    pub(crate) fn from_lookup(
         config: &Config,
         mut get: impl FnMut(&str) -> Option<String>,
     ) -> Result<Self, RegistryError> {

@@ -77,12 +77,7 @@ fn route(request: &Request) -> Response {
                 "This method is not supported for /v1/chat/completions",
             )
         },
-        _ => Response::error(
-            404,
-            "Not Found",
-            "not_found_error",
-            "Route not found",
-        ),
+        _ => Response::error(404, "Not Found", "not_found_error", "Route not found"),
     }
 }
 
@@ -372,7 +367,11 @@ mod tests {
         let unauthorized = dispatch(&request, TOKEN);
         assert_eq!(unauthorized.status, 401);
         assert_eq!(unauthorized.www_authenticate, Some("Bearer"));
-        assert!(unauthorized.body.contains("\"type\":\"authentication_error\""));
+        assert!(
+            unauthorized
+                .body
+                .contains("\"type\":\"authentication_error\"")
+        );
         assert!(unauthorized.body.contains("\"param\":null,\"code\":null"));
 
         let mut authorized_request = request;

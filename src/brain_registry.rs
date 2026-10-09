@@ -95,18 +95,22 @@ impl BrainRegistry {
             return Ok(Self { brains: Vec::new() });
         }
 
+        let ids = ids_text
+            .split(',')
+            .map(|raw_id| raw_id.trim().to_owned())
+            .collect::<Vec<_>>();
         let mut seen = HashSet::new();
-        let mut brains = Vec::new();
-
-        for raw_id in ids_text.split(',') {
-            let id = raw_id.trim();
+        for id in &ids {
             if !valid_brain_id(id) {
                 return Err(RegistryError::InvalidBrainId(id.to_owned()));
             }
             if !seen.insert(id.to_owned()) {
                 return Err(RegistryError::DuplicateBrainId(id.to_owned()));
             }
+        }
 
+        let mut brains = Vec::new();
+        for id in &ids {
             let env_prefix = format!("OIB_BRAIN_{}", id.to_ascii_uppercase());
             let enabled_key = format!("{env_prefix}_ENABLED");
             let enabled_value = get(&enabled_key).ok_or_else(|| RegistryError::MissingField {

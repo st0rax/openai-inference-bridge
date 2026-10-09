@@ -30,6 +30,53 @@ impl ApiError {
         self
     }
 
+    pub fn from_backend(error: &BackendError) -> Self {
+        let (status, error_type, code) = match error.kind {
+            BackendErrorKind::LoginRequired => (401, "authentication_error", "provider_login_required"),
+            BackendErrorKind::Challenge => (503, "server_error", "provider_challenge_required"),
+            BackendErrorKind::RateLimited => (429, "rate_limit_error", "provider_rate_limited"),
+            BackendErrorKind::Timeout => (504, "timeout_error", "brain_timeout"),
+            BackendErrorKind::Cancelled => (408, "timeout_error", "request_cancelled"),
+            BackendErrorKind::BrowserUnavailable => (503, "server_error", "brain_unavailable"),
+            BackendErrorKind::NavigationFailed => (502, "server_error", "browser_navigation_failed"),
+            BackendErrorKind::SubmissionFailed => (502, "server_error", "brain_submission_failed"),
+            BackendErrorKind::ResponseNotDetected => (502, "server_error", "brain_response_not_detected"),
+            BackendErrorKind::ExtractionFailed => (502, "server_error", "brain_extraction_failed"),
+            BackendErrorKind::UnsupportedCapability => {
+                (400, "invalid_request_error", "unsupported_capability")
+            }
+            BackendErrorKind::ReadinessUnknown => (503, "server_error", "brain_readiness_unknown"),
+            BackendErrorKind::Internal => (500, "server_error", "internal_error"),
+        };
+        Self::new(status, error_type, error.message).with_code(code)
+    }
+
+    pub fn from_readiness(readiness: Readiness) -> Option<Self> {
+        let error = match readiness {
+            Readiness::Ready => return None,
+            Readiness::LoginRequired => BackendError::new(
+                BackendErrorKind::LoginRequired,
+                "provider login is required",
+            ),
+            Readiness::Challenge => {
+                BackendError::new(BackendErrorKind::Challenge, "provider challenge detected")
+            }
+            Readiness::RateLimited => BackendError::new(
+                BackendErrorKind::RateLimited,
+                "provider rate limit detected",
+            ),
+            Readiness::Unknown => BackendError::new(
+                BackendErrorKind::ReadinessUnknown,
+                "provider readiness could not be established",
+            ),
+            Readiness::Failed => BackendError::new(
+                BackendErrorKind::BrowserUnavailable,
+                "browser readiness probe failed",
+            ),
+        };
+        Some(Self::from_backend(&error))
+    }
+
     /// Serialize the standard error envelope without exposing implementation details.
     pub fn to_json(&self) -> String {
         format!(
@@ -94,6 +141,49 @@ mod tests {
         assert_eq!(
             error.to_json(),
             r#"{"error":{"message":"quote: \" line\nnext\u0001","type":"invalid_request_error","param":"messages[0].content","code":"invalid_content"}}"#
+        );
+    }
+
+    #[test]
+    fn backend_failures_map_to_stable_http_statuses_and_codes() {
+        let cases = [
+            (BackendErrorKind::LoginRequired, 401, "provider_login_required"),
+            (BackendErrorKind::Challenge, 503, "provider_challenge_required"),
+            (BackendErrorKind::RateLimited, 429, "provider_rate_limited"),
+            (BackendErrorKind::Timeout, 504, "brain_timeout"),
+            (BackendErrorKind::Cancelled, 408, "request_cancelled"),
+            (BackendErrorKind::BrowserUnavailable, 503, "brain_unavailable"),
+            (BackendErrorKind::NavigationFailed, 502, "browser_navigation_failed"),
+            (BackendErrorKind::SubmissionFailed, 502, "brain_submission_failed"),
+            (BackendErrorKind::ResponseNotDetected, 502, "brain_response_not_detected"),
+            (BackendErrorKind::ExtractionFailed, 502, "brain_extraction_failed"),
+            (BackendErrorKind::UnsupportedCapability, 400, "unsupported_capability"),
+            (BackendErrorKind::ReadinessUnknown, 503, "brain_readiness_unknown"),
+            (BackendErrorKind::Internal, 500, "internal_error"),
+        ];
+        for (kind, status, code) in cases {
+            let error = BackendError::new(kind, "safe diagnostic");
+            let api_error = ApiError::from_backend(&error);
+            assert_eq!(api_error.status, status);
+            assert_eq!(api_error.code.as_deref(), Some(code));
+            assert!(api_error.to_json().contains("safe diagnostic"));
+        }
+    }
+
+    #[test]
+    fn readiness_states_are_not_assumed_ready() {
+        assert!(ApiError::from_readiness(Readiness::Ready).is_none());
+        assert_eq!(
+            ApiError::from_readiness(Readiness::LoginRequired)
+                .unwrap()
+                .status,
+            401
+        );
+        assert_eq!(
+            ApiError::from_readiness(Readiness::Unknown)
+                .unwrap()
+                .status,
+            503
         );
     }
 

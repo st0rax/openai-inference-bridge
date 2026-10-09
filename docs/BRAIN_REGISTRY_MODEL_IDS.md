@@ -1,13 +1,13 @@
 # Brain registry and model IDs
 
-Status: P-021 design proposal, 2026-10-09. No registry implementation is claimed.
+Status: P-021 design contract; initial implementation is in `src/brain_registry.rs` and `GET /v1/models`.
 
 ## Decisions
 
 - A **Brain** is a configured browser-chat backend (for example, a ChatGPT web session), not a provider API model name.
 - The registry is project-owned configuration. It does not use WebAgent's Brain registry or types.
 - Each enabled Brain exposes one canonical OpenAI-compatible model ID: `oib/<brain-id>`.
-- `<brain-id>` is a stable lowercase ASCII slug matching `[a-z0-9][a-z0-9-]{0,62}`. IDs are unique after lowercase normalization. Reject invalid or duplicate IDs at startup.
+- `<brain-id>` is a stable lowercase ASCII slug matching `[a-z0-9][a-z0-9-]{0,62}`. IDs must already be canonical lowercase; reject invalid or duplicate IDs at startup.
 - The canonical ID is derived from the configured Brain ID, not its display name, URL, account email, selected provider model, or profile path.
 - No `auto`, implicit default, provider-native aliases or fuzzy matching in the initial release. A request must select an exact registered model ID.
 - `/v1/models` lists configured and enabled Brains without launching browsers or probing login state. Runtime readiness is a separate per-Brain status.
@@ -19,7 +19,7 @@ A configuration entry with Brain ID `chatgpt` produces model ID `oib/chatgpt`. T
 
 ## Registry record
 
-The initial internal record should contain only the minimum needed to resolve a request:
+The initial internal record contains only the minimum needed to resolve a request:
 
 - stable `BrainId`;
 - enabled/disabled state;
@@ -43,7 +43,7 @@ Disabled entries are omitted from `/v1/models`. Do not silently repair invalid c
 
 ## Model-list semantics
 
-The API layer projects each enabled registry entry into the OpenAI model-list wire shape. That projection is not part of the registry contract. The registry does not perform HTTP serialization and does not store API response JSON.
+The initial API layer projects each enabled registry entry into the OpenAI model-list wire shape. The registry exposes a small model-list projection helper for this initial endpoint, but does not store API response JSON.
 
 Listing a model means only that it is configured and enabled. It does not promise that its browser is running, logged in, unblocked, or currently available. Those are runtime readiness states.
 

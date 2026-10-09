@@ -1,0 +1,14 @@
+[package]
+name = "openai-inference-bridge"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+description = "Local OpenAI-compatible inference bridge for browser-based chat interfaces"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "openai-inference-bridge"
+path = "src/main.rs"

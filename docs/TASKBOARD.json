@@ -295,12 +295,12 @@
       "area": "Architecture",
       "title": "Define normalized request and event types",
       "type": "design",
-      "status": "free",
-      "owner": null,
-      "branch": null,
-      "claimed_at": null,
-      "done_at": null,
-      "proof_path": null,
+      "status": "done",
+      "owner": "ChatGPT",
+      "branch": "design/P-023-normalized-request-events",
+      "claimed_at": "2026-10-09",
+      "done_at": "2026-10-09",
+      "proof_path": "docs/NORMALIZED_REQUEST_EVENTS.md",
       "dod": "Define normalized request and event types is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [
         "P-018"

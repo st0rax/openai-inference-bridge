@@ -227,11 +227,11 @@
       "area": "Upstream audit",
       "title": "Define extraction and migration strategy",
       "type": "docs",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "research/P-018-integration-strategy",
       "claimed_at": "2026-10-09",
-      "done_at": null,
+      "done_at": "2026-10-09",
       "proof_path": "docs/INTEGRATION_STRATEGY_2026-10-09.md",
       "dod": "Define extraction and migration strategy is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [

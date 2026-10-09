@@ -2,6 +2,7 @@
 //!
 //! HTTP API and browser runtime are not implemented yet.
 
+pub mod api_error;
 pub mod config;
 pub mod http_server;
 

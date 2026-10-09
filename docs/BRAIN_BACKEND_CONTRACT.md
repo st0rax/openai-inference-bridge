@@ -1,6 +1,6 @@
 # Project-owned BrainBackend contract
 
-Status: P-020 design proposal, 2026-10-09. No implementation or runtime test is claimed.
+Status: P-020 contract implemented in `src/brain_backend.rs` with fake-driver unit tests. No concrete WebView driver or live browser test is claimed.
 
 ## Decisions
 
@@ -80,4 +80,4 @@ OpenAI DTOs/routes/auth/model IDs, SSE framing, tool protocols, attachments, med
 - P-025: configuration and secret handling.
 - P-004: establish the Rust workspace before implementing the interface in code.
 
-This is a contract proposal for review, not Rust implementation.
+The Rust contract and generic browser adapter are implemented. The concrete browser driver, worker manager, and live browser verification remain outstanding.

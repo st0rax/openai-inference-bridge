@@ -395,6 +395,18 @@ mod tests {
     }
 
     #[test]
+    fn start_url_validation_rejects_unsafe_or_malformed_authorities() {
+        assert!(valid_start_url("https://chatgpt.com/"));
+        assert!(valid_start_url("http://localhost:3000/"));
+        assert!(valid_start_url("https://[::1]:8443/"));
+        assert!(!valid_start_url("file:///etc/passwd"));
+        assert!(!valid_start_url("https://user@host.example/"));
+        assert!(!valid_start_url("https://host.example:70000/"));
+        assert!(!valid_start_url("https://host.example/#fragment"));
+        assert!(!valid_start_url("https://bad..host.example/"));
+    }
+
+    #[test]
     fn enabled_brain_requires_enabled_flag() {
         assert!(matches!(
             registry(&[("OIB_BRAIN_IDS", "chatgpt")]),

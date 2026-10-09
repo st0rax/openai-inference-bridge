@@ -271,6 +271,7 @@ fn worker_loop(
     receiver: Receiver<Command>,
     poisoned: Arc<AtomicBool>,
 ) {
+    let mut started = false;
     while let Ok(command) = receiver.recv() {
         if poisoned.load(Ordering::Acquire) && !matches!(&command, Command::Shutdown { .. }) {
             reject_command(command);
@@ -279,9 +280,15 @@ fn worker_loop(
 
         match command {
             Command::Start { deadline, reply } => {
-                let result = backend.start(deadline);
+                let result = if started {
+                    Ok(())
+                } else {
+                    backend.start(deadline)
+                };
                 if result.is_err() {
                     poisoned.store(true, Ordering::Release);
+                } else {
+                    started = true;
                 }
                 let _ = reply.send(result);
             }

@@ -125,6 +125,7 @@ pub struct BrowserBrainBackend<D: BrowserPageDriver> {
     profile_dir: PathBuf,
     driver: D,
     started: bool,
+    start_attempted: bool,
     shutdown_failed: bool,
 }
 
@@ -155,6 +156,7 @@ impl<D: BrowserPageDriver> BrowserBrainBackend<D> {
             profile_dir: brain.profile_dir.clone(),
             driver,
             started: false,
+            start_attempted: false,
             shutdown_failed: false,
         })
     }
@@ -221,12 +223,13 @@ impl<D: BrowserPageDriver> BrowserBrainBackend<D> {
 impl<D: BrowserPageDriver> BrainBackend for BrowserBrainBackend<D> {
     fn start(&mut self, deadline: Instant) -> Result<(), BackendError> {
         Self::check_deadline(deadline)?;
-        if self.started || self.shutdown_failed {
+        if self.start_attempted || self.shutdown_failed {
             return Err(BackendError::new(
                 BackendErrorKind::Internal,
                 "browser backend cannot be started in its current lifecycle state",
             ));
         }
+        self.start_attempted = true;
         self.driver
             .start(&self.profile_dir, &self.start_url, deadline)?;
         self.started = true;
@@ -256,6 +259,13 @@ impl<D: BrowserPageDriver> BrainBackend for BrowserBrainBackend<D> {
         let readiness = self.driver.readiness(request.deadline)?;
         if let Some(error) = Self::readiness_error(readiness) {
             return Err(error);
+        }
+        Self::check_deadline(request.deadline)?;
+        if request.cancellation.is_cancelled() {
+            return Err(BackendError::new(
+                BackendErrorKind::Cancelled,
+                "inference was cancelled",
+            ));
         }
         self.driver
             .submit_prompt(&request.prompt, request.deadline)?;
@@ -288,12 +298,13 @@ impl<D: BrowserPageDriver> BrainBackend for BrowserBrainBackend<D> {
     }
 
     fn shutdown(&mut self) -> Result<(), BackendError> {
-        if !self.started && !self.shutdown_failed {
+        if !self.start_attempted && !self.shutdown_failed {
             return Ok(());
         }
         match self.driver.shutdown() {
             Ok(()) => {
                 self.started = false;
+                self.start_attempted = false;
                 self.shutdown_failed = false;
                 Ok(())
             }
@@ -406,6 +417,7 @@ mod tests {
 
         assert_eq!(result, "final answer");
         assert_eq!(events.len(), 2);
+        assert!(backend.driver.started);
         assert_eq!(
             backend.driver.submitted.as_deref(),
             Some("preserve all conversation context")

@@ -69,6 +69,10 @@ impl fmt::Display for RegistryError {
 impl std::error::Error for RegistryError {}
 
 impl BrainRegistry {
+    pub fn empty() -> Self {
+        Self { brains: Vec::new() }
+    }
+
     pub fn from_env(config: &Config) -> Result<Self, RegistryError> {
         Self::from_lookup(config, |key| env::var(key).ok())
     }

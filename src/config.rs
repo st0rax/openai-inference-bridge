@@ -114,7 +114,8 @@ fn default_data_dir(get: &mut impl FnMut(&str) -> Option<String>) -> Result<Path
     #[cfg(target_os = "macos")]
     {
         if let Some(home) = get("HOME").filter(|value| !value.is_empty()) {
-            let path = PathBuf::from(home).join("Library/Application Support/OpenAIInferenceBridge");
+            let path =
+                PathBuf::from(home).join("Library/Application Support/OpenAIInferenceBridge");
             if path.is_absolute() {
                 return Ok(path);
             }
@@ -149,11 +150,19 @@ mod tests {
     const TOKEN: &str = "example-secret-token-that-is-long-enough";
 
     fn config(values: &[(&str, &str)]) -> Result<Config, ConfigError> {
-        Config::from_lookup(|key| values.iter().find(|(name, _)| *name == key).map(|(_, value)| (*value).to_owned()))
+        Config::from_lookup(|key| {
+            values
+                .iter()
+                .find(|(name, _)| *name == key)
+                .map(|(_, value)| (*value).to_owned())
+        })
     }
 
     fn temp_data_dir() -> String {
-        env::temp_dir().join("oib-test").to_string_lossy().into_owned()
+        env::temp_dir()
+            .join("oib-test")
+            .to_string_lossy()
+            .into_owned()
     }
 
     #[test]

@@ -18,7 +18,7 @@ Each Brain's browser profile path is isolated below `profiles/<brain-slug>`. Slu
 
 The token is redacted from the configuration's Debug representation. Do not pass secrets as command-line arguments or log their values. A remote bind opt-in is not a substitute for TLS, firewall policy, or a security review; remote serving should remain disabled unless the deployment deliberately supplies those controls.
 
-This module currently validates and represents configuration; it is not yet connected to an HTTP server or browser runtime.
+The configuration is loaded by the initial local HTTP listener. The listener enforces bearer-token authentication, but the API routes still return `501 Not Implemented` and no browser runtime is connected yet.
 
 
 See [configuration and secret-handling policy](CONFIGURATION_AND_SECRETS.md) for normative requirements for HTTP authentication, logging, provider profiles, and future remote exposure.

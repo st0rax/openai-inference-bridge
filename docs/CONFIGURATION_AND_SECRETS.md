@@ -12,7 +12,7 @@ This document is normative for the bridge's configuration, authentication, and b
 - Brain profile paths are rooted under `<data-dir>/profiles/<validated-brain-slug>`. The bridge does not implicitly reuse a WebAgent profile.
 - See [configuration reference](CONFIGURATION.md) for variable names and platform paths.
 
-These guarantees currently apply to the configuration module. The HTTP server, request authentication, browser runtime, and profile creation are not yet implemented.
+These configuration guarantees are implemented. The initial HTTP listener now enforces bearer authentication before route dispatch. Browser runtime and profile creation are not yet implemented.
 
 ## Secret sources and handling
 
@@ -26,17 +26,17 @@ These guarantees currently apply to the configuration module. The HTTP server, r
 
 ## HTTP authentication requirements
 
-When the HTTP layer is implemented:
+When adding or changing HTTP routes:
 
-- Require `Authorization: Bearer <token>` for all API routes except any explicitly documented liveness endpoint.
-- Compare presented and configured tokens using a constant-time comparison where practical.
+- Require `Authorization: Bearer <token>` for all API routes except any explicitly documented liveness endpoint. The current listener enforces this for every route, including unknown routes.
+- Compare presented and configured tokens using a constant-time comparison where practical. The current listener uses a no-early-exit byte comparison.
 - Reject missing, malformed, or incorrect credentials before dispatching work to a Brain.
 - Do not support query-string tokens, URL credentials, or token values in request bodies.
 - Return a generic authentication error without disclosing which token component was wrong.
 - Do not persist the API token to disk. The configured environment is the source of truth for the process lifetime.
 - Keep error bodies and request logs free of prompts, provider cookies, and authorization headers by default.
 
-The API token currently grants access to the whole local bridge; per-client identities, scopes, and token rotation are not implemented. A future change must document those capabilities rather than imply they already exist.
+The API token currently grants access to the whole local bridge; per-client identities, scopes, and token rotation are not implemented. The initial server still refuses non-loopback binding regardless of the opt-in flag because TLS and remote deployment hardening are absent.
 
 ## Network exposure
 
@@ -59,4 +59,4 @@ Run the repository verification commands recorded in `docs/TASKBOARD.json`: `car
 
 ## Current limitations
 
-This policy does not claim that API authentication, HTTP routing, secure remote transport, browser profile permissions, or provider session management are implemented. Those controls remain acceptance criteria for the corresponding runtime tasks.
+Bearer authentication and the initial HTTP route table are implemented, but the routes are placeholders returning `501`. This policy does not claim that OpenAI request parsing, inference dispatch, secure remote transport, browser profile permissions, or provider session management are implemented. Those controls remain acceptance criteria for the corresponding runtime tasks.

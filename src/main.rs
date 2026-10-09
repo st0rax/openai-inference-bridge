@@ -11,7 +11,7 @@ fn main() {
         }
     };
 
-    if let Err(error) = http_server::run(config.bind_addr) {
+    if let Err(error) = http_server::run(config) {
         eprintln!("HTTP server failed: {error}");
         process::exit(1);
     }

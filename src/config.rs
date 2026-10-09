@@ -46,7 +46,7 @@ impl Config {
         if token.len() < TOKEN_MIN_LEN || !token.bytes().all(|b| (0x20..=0x7e).contains(&b)) {
             return Err(ConfigError::WeakToken);
         }
-        if !bind_addr.ip().is_loopback() && env::var("OIB_ALLOW_REMOTE").as_deref() != Ok("1") {
+        if !bind_addr.ip().is_loopback() && !matches!(env::var("OIB_ALLOW_REMOTE").as_deref(), Ok("1")) {
             return Err(ConfigError::RemoteBindRequiresOptIn);
         }
         let data_dir = match env::var_os("OIB_DATA_DIR") {

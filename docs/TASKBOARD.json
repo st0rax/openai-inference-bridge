@@ -244,12 +244,12 @@
       "area": "Architecture",
       "title": "Define independent BrainBackend interface",
       "type": "design",
-      "status": "free",
-      "owner": null,
-      "branch": null,
-      "claimed_at": null,
-      "done_at": null,
-      "proof_path": null,
+      "status": "done",
+      "owner": "ChatGPT",
+      "branch": "design/P-020-brain-backend-contract",
+      "claimed_at": "2026-10-09",
+      "done_at": "2026-10-09",
+      "proof_path": "docs/BRAIN_BACKEND_CONTRACT.md",
       "dod": "Define independent BrainBackend interface is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [
         "P-018"

@@ -8,6 +8,8 @@ WebAgent is an upstream source to study, not an automatically approved dependenc
 
 ## Product boundary
 
+The project-owned lifecycle and browser-inference boundary is specified in [BRAIN_BACKEND_CONTRACT.md](BRAIN_BACKEND_CONTRACT.md). It is a design contract, not an implemented Rust trait; P-004 must establish the workspace before code implementation.
+
 ```text
 OpenAI-compatible client
   -> this repository's HTTP/API layer

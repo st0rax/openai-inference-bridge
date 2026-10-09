@@ -261,12 +261,12 @@
       "area": "Architecture",
       "title": "Define Brain registry and model IDs",
       "type": "design",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "design/P-021-brain-registry-model-ids",
       "claimed_at": "2026-10-09",
-      "done_at": null,
-      "proof_path": null,
+      "done_at": "2026-10-09",
+      "proof_path": "docs/BRAIN_REGISTRY_MODEL_IDS.md",
       "dod": "Define Brain registry and model IDs is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [
         "P-020"

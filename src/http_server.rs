@@ -160,9 +160,13 @@ fn is_authorized(header: Option<&str>, expected_token: &str) -> bool {
 /// Compare all bytes up to the longer input length without early exit on a mismatch.
 fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
     let mut difference = left.len() ^ right.len();
-    for index in 0..left.len().max(right.len()) {
-        let left_byte = left.get(index).copied().unwrap_or(0);
-        let right_byte = right.get(index).copied().unwrap_or(0);
+    for (left_byte, right_byte) in left
+        .iter()
+        .copied()
+        .chain(std::iter::repeat(0))
+        .zip(right.iter().copied().chain(std::iter::repeat(0)))
+        .take(left.len().max(right.len()))
+    {
         difference |= usize::from(left_byte ^ right_byte);
     }
     difference == 0
@@ -339,8 +343,10 @@ mod tests {
         assert!(!is_authorized(Some("Bearer wrong-token"), TOKEN));
         assert!(!is_authorized(Some("Basic abc"), TOKEN));
         assert!(!is_authorized(Some("Bearer token extra"), TOKEN));
-        assert!(is_authorized(Some(&format!("Bearer {TOKEN}")), TOKEN));
-        assert!(is_authorized(Some(&format!("bearer {TOKEN}")), TOKEN));
+        let valid_header = format!("Bearer {TOKEN}");
+        let lowercase_header = format!("bearer {TOKEN}");
+        assert!(is_authorized(Some(&valid_header), TOKEN));
+        assert!(is_authorized(Some(&lowercase_header), TOKEN));
     }
 
     #[test]
@@ -356,7 +362,8 @@ mod tests {
             "GET /v1/models HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {TOKEN}\r\n\r\n"
         );
         let request = read_request(&mut Cursor::new(bytes)).unwrap();
-        assert_eq!(request.authorization.as_deref(), Some(&format!("Bearer {TOKEN}")));
+        let expected = format!("Bearer {TOKEN}");
+        assert_eq!(request.authorization.as_deref(), Some(expected.as_str()));
     }
 
     #[test]

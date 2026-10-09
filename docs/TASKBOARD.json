@@ -204,11 +204,11 @@
       "area": "Upstream audit",
       "title": "Create file-level reuse decision matrix",
       "type": "research",
-      "status": "claimed",
+      "status": "done",
       "owner": "ChatGPT",
       "branch": "research/P-017-reuse-decision",
       "claimed_at": "2026-10-09",
-      "done_at": null,
+      "done_at": "2026-10-09",
       "proof_path": "docs/UPSTREAM_REUSE_DECISION_2026-10-09.md",
       "dod": "Create file-level reuse decision matrix is implemented or documented, reviewed, and verified with reproducible evidence. Unsupported behavior is explicitly marked.",
       "depends_on": [

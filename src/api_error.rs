@@ -1,5 +1,7 @@
 //! OpenAI-compatible structured error envelopes for HTTP responses.
 
+use crate::brain_backend::{BackendError, BackendErrorKind, Readiness};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ApiError {
     pub status: u16,

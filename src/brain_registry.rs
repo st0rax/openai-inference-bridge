@@ -213,7 +213,12 @@ fn valid_brain_id(id: &str) -> bool {
 }
 
 fn valid_start_url(url: &str) -> bool {
-    if url.is_empty() || url.chars().any(|character| character.is_whitespace() || character.is_control()) {
+    if url.is_empty()
+        || url.contains('#')
+        || url
+            .chars()
+            .any(|character| character.is_whitespace() || character.is_control())
+    {
         return false;
     }
 
@@ -223,8 +228,61 @@ fn valid_start_url(url: &str) -> bool {
     else {
         return false;
     };
-    let authority = rest.split(|character| matches!(character, '/' | '?' | '#')).next().unwrap_or("");
-    !authority.is_empty() && !authority.contains('@')
+    let authority = rest
+        .split(|character| matches!(character, '/' | '?'))
+        .next()
+        .unwrap_or("");
+    if authority.is_empty() || authority.contains('@') {
+        return false;
+    }
+
+    let (host, port) = if authority.starts_with('[') {
+        let Some(close) = authority.find(']') else {
+            return false;
+        };
+        let host = &authority[1..close];
+        if host.parse::<std::net::Ipv6Addr>().is_err() {
+            return false;
+        }
+        let suffix = &authority[close + 1..];
+        let port = if suffix.is_empty() {
+            None
+        } else if let Some(port) = suffix.strip_prefix(':') {
+            Some(port)
+        } else {
+            return false;
+        };
+        (host, port)
+    } else if let Some((host, port)) = authority.rsplit_once(':') {
+        if host.contains(':') {
+            return false;
+        }
+        (host, Some(port))
+    } else {
+        (authority, None)
+    };
+
+    if let Some(port) = port {
+        if port.is_empty() || port.parse::<u16>().is_err_and(|_| true) || port == "0" {
+            return false;
+        }
+    }
+
+    if host.parse::<std::net::Ipv4Addr>().is_ok() {
+        return true;
+    }
+
+    !host.is_empty()
+        && host.len() <= 253
+        && host.split('.').all(|label| {
+            !label.is_empty()
+                && label.len() <= 63
+                && label.as_bytes()[0].is_ascii_alphanumeric()
+                && label.as_bytes()[label.len() - 1].is_ascii_alphanumeric()
+                && label
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        })
 }
 
 #[cfg(test)]

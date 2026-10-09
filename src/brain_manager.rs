@@ -116,7 +116,13 @@ impl BrainManager {
             })?;
 
         loop {
-            let wait = remaining(request.deadline)?.min(EVENT_POLL_INTERVAL);
+            let wait = match remaining(request.deadline) {
+                Ok(wait) => wait.min(EVENT_POLL_INTERVAL),
+                Err(error) => {
+                    poisoned.store(true, Ordering::Release);
+                    return Err(error);
+                }
+            };
             match event_receiver.recv_timeout(wait) {
                 Ok(event) => event_sink(event),
                 Err(mpsc::RecvTimeoutError::Timeout) => continue,
@@ -271,7 +277,7 @@ fn worker_loop(
     poisoned: Arc<AtomicBool>,
 ) {
     while let Ok(command) = receiver.recv() {
-        if poisoned.load(Ordering::Acquire) && !matches!(command, Command::Shutdown { .. }) {
+        if poisoned.load(Ordering::Acquire) && !matches!(&command, Command::Shutdown { .. }) {
             reject_command(command);
             continue;
         }
@@ -403,7 +409,6 @@ mod tests {
         brain_backend::{BackendEvent, TextSnapshot},
         config::Config,
     };
-    use std::path::PathBuf;
     use std::sync::atomic::AtomicUsize;
     use std::thread;
     use std::time::Duration;

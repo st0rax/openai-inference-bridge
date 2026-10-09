@@ -6,9 +6,9 @@ The intended backend is a chat interface to which a user is already authenticate
 
 ## Current status
 
-**Source audits complete; implementation not started.** The earlier recommendation to use WebAgent's public API bridge is superseded. This project will implement its own OpenAI-compatible API and internal Brain interface. Every candidate WebAgent component must be evaluated individually before any source reuse or dependency adoption.
+**Foundation in progress.** Source audits and the independent architecture contracts are complete. The Rust scaffold and cross-platform CI are verified; safe environment-based configuration and secret-handling policy are implemented/documented. The HTTP API, request authentication, model registry implementation, and browser runtime are not implemented yet. The earlier recommendation to use WebAgent's public API bridge is superseded. This project will implement its own OpenAI-compatible API and internal Brain interface. Every candidate WebAgent component must be evaluated individually before any source reuse or dependency adoption.
 
-Start with [the current status handover](docs/STATUS_2026-10-09.md), then read the [integration strategy](docs/INTEGRATION_STRATEGY_2026-10-09.md), [mandatory component-evaluation gate](docs/UPSTREAM_COMPONENT_EVALUATION_POLICY.md), and [file-level reuse audit](docs/UPSTREAM_REUSE_DECISION_2026-10-09.md).
+Start with [the current status handover](docs/STATUS_2026-10-09.md) and the [configuration reference](docs/CONFIGURATION.md) plus [secret-handling policy](docs/CONFIGURATION_AND_SECRETS.md), then read the [integration strategy](docs/INTEGRATION_STRATEGY_2026-10-09.md), [mandatory component-evaluation gate](docs/UPSTREAM_COMPONENT_EVALUATION_POLICY.md), and [file-level reuse audit](docs/UPSTREAM_REUSE_DECISION_2026-10-09.md).
 
 ## Design principles
 

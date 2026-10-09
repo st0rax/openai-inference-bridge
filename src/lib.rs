@@ -1,6 +1,6 @@
 //! Core library for OpenAI Inference Bridge.
 //!
-//! The initial HTTP listener, model-list endpoint, and error envelope exist; Chat Completions and browser runtime are not implemented yet.
+//! The HTTP listener, model-list endpoint, Chat Completions validation, and Chromium/Edge DevTools driver are implemented. Live provider inference, streaming, and token accounting remain unverified or unsupported.
 
 pub mod api_error;
 pub mod brain_backend;

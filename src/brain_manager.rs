@@ -11,8 +11,7 @@ use std::time::{Duration, Instant};
 
 use crate::{
     brain_backend::{
-        BackendError, BackendErrorKind, BackendEvent, BrainBackend, CancellationToken,
-        InferenceRequest, Readiness,
+        BackendError, BackendErrorKind, BackendEvent, BrainBackend, InferenceRequest, Readiness,
     },
     brain_registry::{Brain, BrainRegistry},
 };
@@ -406,7 +405,7 @@ fn should_poison(kind: BackendErrorKind) -> bool {
 mod tests {
     use super::*;
     use crate::{
-        brain_backend::{BackendEvent, TextSnapshot},
+        brain_backend::{BackendEvent, CancellationToken},
         config::Config,
     };
     use std::sync::atomic::AtomicUsize;

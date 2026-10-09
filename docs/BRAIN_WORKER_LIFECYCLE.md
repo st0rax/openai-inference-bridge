@@ -14,9 +14,9 @@ The initial worker manager lives in `src/brain_manager.rs`. It owns one worker t
 
 ## Important limits
 
-- The manager does not itself launch a WebView. It requires a `BrainBackend` factory; no concrete browser driver is currently registered by the executable.
+- The manager owns a `BrainBackend` factory. The executable now registers the project-owned `BrowserCdpDriver`, which launches Chromium/Edge through a loopback-only DevTools endpoint.
 - A timed-out driver operation that ignores its deadline may continue in a detached worker thread. The manager will not reuse that worker, but OS-level resource reclamation depends on the driver eventually returning.
 - This does not provide cross-process locking. A future profile/session layer must ensure that two bridge processes cannot open the same browser profile concurrently.
-- The current HTTP server does not yet construct a `BrainManager`; Chat Completions continues to return `503 brain_runtime_unavailable` for configured models.
+- The HTTP server constructs a `BrainManager` and routes non-streaming Chat Completions through it. Live provider interaction has not yet been verified; streaming and token accounting remain unsupported.
 
 Tests use fake backends to verify same-Brain serialization, cross-Brain concurrency, timeout poisoning, and shutdown.

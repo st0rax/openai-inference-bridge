@@ -25,4 +25,4 @@ The adapter does not log prompts, replies, URLs, cookies, or profile paths. Back
 
 Unit tests use a fake driver to verify snapshot flow, final-result semantics, readiness failures, cancellation, deadlines, and shutdown. These tests do not establish browser correctness.
 
-There is **no concrete WebView driver yet**. P-041 adds the per-Brain worker manager, but no browser is launched and no live provider page is controlled. A platform driver and executable wiring remain outstanding. Until those exist, Chat Completions returns `503 brain_runtime_unavailable` for configured models.
+The concrete `BrowserCdpDriver` now launches Chromium/Edge with an isolated, locked profile and a loopback-only DevTools port. It navigates, detects readiness states, submits a prompt, and emits full-text snapshots. The executable is wired to this driver. No live provider/browser integration test has yet been run, so DOM selector compatibility and successful inference remain unverified.

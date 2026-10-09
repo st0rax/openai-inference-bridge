@@ -25,4 +25,4 @@ The adapter does not log prompts, replies, URLs, cookies, or profile paths. Back
 
 Unit tests use a fake driver to verify snapshot flow, final-result semantics, readiness failures, cancellation, deadlines, and shutdown. These tests do not establish browser correctness.
 
-There is **no concrete WebView driver yet**. No browser is launched and no live provider page is controlled by this module. P-041 owns the next lifecycle/runtime connection step. Until that exists, Chat Completions returns `503 brain_runtime_unavailable` for configured models.
+There is **no concrete WebView driver yet**. P-041 adds the per-Brain worker manager, but no browser is launched and no live provider page is controlled. A platform driver and executable wiring remain outstanding. Until those exist, Chat Completions returns `503 brain_runtime_unavailable` for configured models.

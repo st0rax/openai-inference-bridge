@@ -1,48 +1,25 @@
-# Upstream audit and reuse decisions
+# Upstream reuse decision
 
-Status: initial hypotheses only; no source files copied.
+**Current decision:** prototype with a pinned `st0rax/webagent-rs` library dependency; do not copy bridge/runtime files yet. The reviewed source revision is `a6693dcc8095b3306a11593a216741f8a5c85a22` (package `0.11.3`). This remains conditional on a clean build and live-browser acceptance spike.
 
-## Repositories
+The full file-level decision matrix, dependency constraints, isolation requirements and acceptance gate are in [`UPSTREAM_REUSE_DECISION_2026-10-09.md`](UPSTREAM_REUSE_DECISION_2026-10-09.md).
 
-- `st0rax/webagent-rs` — primary technical reference for the existing API bridge and browser-based Brain runtime.
-- `st0rax/dummy-bazaar` — workflow/template reference only.
+Detailed source audits:
+- [API bridge inventory and call graph](UPSTREAM_AUDIT_2026-10-09.md)
+- [Brain runtime lifecycle](BRAIN_RUNTIME_AUDIT_2026-10-09.md)
+- [Inference, tool calling and streaming](INFERENCE_STREAMING_AUDIT_2026-10-09.md)
+- [Chat Completions compatibility](CHAT_COMPLETIONS_AUDIT_2026-10-09.md)
+- [Responses API and state lifecycle](RESPONSES_API_AUDIT_2026-10-09.md)
+- [Media paths and capabilities](MEDIA_CAPABILITY_AUDIT_2026-10-09.md)
 
-## Known source areas to inspect
+## Decision in one paragraph
 
-From the current `webagent-rs` architecture notes and `src/api_bridge.rs`:
+The public `webagent::api_bridge::serve(BridgeConfig)` boundary can back a separate executable without tying the product to Pi/OpenCode/OpenClaw/ZeroClaw. The runtime is too coupled to profile/configuration/WebView/relay modules for a safe small-file copy. Pin the upstream revision for the prototype, set an app-specific `WEBAGENT_ROOT` by default to avoid accidentally sharing authenticated profiles, and keep the wrapper limited to configuration, API lifecycle, diagnostics and later operator UI. If a separate source/runtime implementation becomes necessary, design a dedicated extraction rather than copying `src/api_bridge/*.rs` or `src/brain.rs` in isolation.
 
-- `src/api_bridge.rs`
-- `src/api_bridge/boundary.rs`
-- `src/api_bridge/catalog.rs`
-- `src/api_bridge/content.rs`
-- `src/api_bridge/inference.rs`
-- `src/api_bridge/provider_handlers.rs`
-- `src/api_bridge/response_protocol.rs`
-- `src/api_bridge/routing.rs`
-- `src/api_bridge/store.rs`
-- `src/api_bridge/transport.rs`
-- `src/api_bridge/wire.rs`
-- `src/brain.rs`
-- browser backend/session lifecycle modules and runtime wiring
+## Known caveats
 
-These paths and their actual contents must be checked against the current upstream tree before a copy or extraction. The architecture document warns that source files without module wiring are not production-wired; verify both implementation and call sites.
-
-## Initial decision matrix
-
-| Area | Initial stance | Reason / required proof |
-|---|---|---|
-| HTTP parsing and SSE wire helpers | Adapt or reuse selectively | Check coupling to root types and exact protocol behavior |
-| Auth/error boundary | Adapt selectively | Recheck security behavior and config contract |
-| Model catalog/selection | Adapt | Separate Brain IDs from WebAgent CLI/profile semantics |
-| Prompt/tool content normalization | Audit first | Keep only API-required normalization; do not inherit unsupported claims |
-| Browser inference invocation | Reuse behind a narrow adapter if feasible | Must avoid AgentController, shell executor and webagent/1 action protocol |
-| BrainBackend/session lifecycle | Likely reuse/adapt | Determine minimal dependency closure and WebView ownership constraints |
-| Response storage/retrieval | Optional; decide by endpoint scope | Avoid persistence unless required and documented |
-| Anthropic protocol handlers | Defer unless product scope requires them | OpenAI-compatible API is the first boundary |
-| Multimodal handling | Evidence-based, likely staged | Current architecture notes mark media handling as deferred in some areas |
-| UI, CLI, TUI, benchmarks, workers, autonomous controller | Exclude initially | Outside the standalone inference-bridge boundary |
-| `dummy-bazaar` files | Recreate/adapt workflow, not copy blindly | Remove template placeholders and project-specific assumptions |
-
-## Required outcome
-
-`P-017` must replace these hypotheses with a file-level table containing: path, responsibility, call sites, dependency closure, tests, license/attribution implications, decision (`reuse`, `adapt`, `rewrite`, `exclude`), and rationale. No production code should be copied before that decision is reviewed.
+- Source audit only; no clean build or live-browser test has been run for this new repository.
+- The upstream repository declares MIT. Keep notices if copying code; transitive dependency license review remains outstanding.
+- Chat Completions accepts only a subset of OpenAI semantics; some fields may be silently ignored.
+- Responses source and documentation disagree about persistence; response objects hardcode `store: true`.
+- Media capabilities vary by Brain and operation; the Speech route currently fails closed without a verified TTS artifact.

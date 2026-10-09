@@ -7,9 +7,15 @@ use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::time::Duration;
 
-use crate::{api_error::ApiError, brain_registry::BrainRegistry, config::Config};
+use crate::{
+    api_error::ApiError,
+    brain_registry::BrainRegistry,
+    chat_completion::normalize_request,
+    config::Config,
+};
 
 const MAX_HEADER_BYTES: usize = 16 * 1024;
+const MAX_BODY_BYTES: usize = 1024 * 1024;
 const READ_TIMEOUT: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,6 +23,8 @@ struct Request {
     method: String,
     target: String,
     authorization: Option<String>,
+    content_type: Option<String>,
+    body: Vec<u8>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -39,29 +47,84 @@ impl Response {
         }
     }
 
+    fn api_error(reason: &'static str, error: ApiError) -> Self {
+        Self {
+            status: error.status,
+            reason,
+            body: error.to_json(),
+            allow: None,
+            www_authenticate: None,
+        }
+    }
+
     fn error(
         status: u16,
         reason: &'static str,
         error_type: &'static str,
         message: &'static str,
     ) -> Self {
-        Self::json(
-            status,
-            reason,
-            ApiError::new(status, error_type, message).to_json(),
-        )
+        Self::api_error(reason, ApiError::new(status, error_type, message))
     }
 }
 
 fn route(request: &Request, registry: &BrainRegistry) -> Response {
     match (request.method.as_str(), request.target.as_str()) {
         ("GET", "/v1/models") => Response::json(200, "OK", registry.models_json()),
-        ("POST", "/v1/chat/completions") => Response::error(
-            501,
-            "Not Implemented",
-            "not_implemented_error",
-            "POST /v1/chat/completions is not implemented yet",
-        ),
+        ("POST", "/v1/chat/completions") => {
+            let is_json = request
+                .content_type
+                .as_deref()
+                .and_then(|value| value.split(';').next())
+                .is_some_and(|value| value.trim().eq_ignore_ascii_case("application/json"));
+            if !is_json {
+                return Response::api_error(
+                    "Unsupported Media Type",
+                    ApiError::new(
+                        415,
+                        "invalid_request_error",
+                        "Content-Type must be application/json",
+                    )
+                    .with_param("Content-Type")
+                    .with_code("unsupported_media_type"),
+                );
+            }
+
+            let normalized = match normalize_request(&request.body) {
+                Ok(request) => request,
+                Err(error) => {
+                    let reason = if error.status == 413 {
+                        "Payload Too Large"
+                    } else {
+                        "Bad Request"
+                    };
+                    return Response::api_error(reason, error);
+                }
+            };
+
+            if registry.resolve_model_id(&normalized.model_id).is_none() {
+                return Response::api_error(
+                    "Not Found",
+                    ApiError::new(
+                        404,
+                        "model_not_found",
+                        "The requested model is not configured or enabled",
+                    )
+                    .with_param("model")
+                    .with_code("model_not_found"),
+                );
+            }
+
+            Response::api_error(
+                "Service Unavailable",
+                ApiError::new(
+                    503,
+                    "server_error",
+                    "The configured Brain has no execution backend yet",
+                )
+                .with_param("model")
+                .with_code("brain_runtime_unavailable"),
+            )
+        },
         (_, "/v1/models") => Response {
             allow: Some("GET"),
             ..Response::error(
@@ -136,9 +199,15 @@ fn handle_connection(
                 408,
                 "Request Timeout",
                 "timeout_error",
-                "Timed out reading request headers",
+                "Timed out reading request",
             )
         }
+        Err(error) if error.kind() == io::ErrorKind::FileTooLarge => Response::error(
+            413,
+            "Payload Too Large",
+            "invalid_request_error",
+            "Request body exceeds the 1 MiB limit",
+        ),
         Err(_) => Response::error(
             400,
             "Bad Request",
@@ -252,6 +321,9 @@ fn read_request(reader: &mut impl Read) -> io::Result<Request> {
     }
 
     let mut authorization = None;
+    let mut content_type = None;
+    let mut content_length = None;
+    let mut has_transfer_encoding = false;
     for line in lines {
         if line.starts_with(' ') || line.starts_with('\t') {
             return Err(io::Error::new(
@@ -277,28 +349,61 @@ fn read_request(reader: &mut impl Read) -> io::Result<Request> {
                 "invalid control character in HTTP header",
             ));
         }
+        let value = value.trim_matches(|character| character == ' ' || character == '\t');
         if name.eq_ignore_ascii_case("authorization") {
-            if authorization.is_some() {
+            if authorization.is_some() || value.is_empty() {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
-                    "duplicate Authorization headers",
-                ));
-            }
-            let value = value.trim_matches(|character| character == ' ' || character == '\t');
-            if value.is_empty() {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "empty Authorization header",
+                    "invalid Authorization header",
                 ));
             }
             authorization = Some(value.to_owned());
+        } else if name.eq_ignore_ascii_case("content-type") {
+            if content_type.is_some() || value.is_empty() {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "invalid Content-Type header",
+                ));
+            }
+            content_type = Some(value.to_owned());
+        } else if name.eq_ignore_ascii_case("content-length") {
+            if content_length.is_some() || value.is_empty() || !value.bytes().all(|b| b.is_ascii_digit()) {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "invalid Content-Length header",
+                ));
+            }
+            let length = value.parse::<usize>().map_err(|_| {
+                io::Error::new(io::ErrorKind::InvalidData, "invalid Content-Length header")
+            })?;
+            if length > MAX_BODY_BYTES {
+                return Err(io::Error::new(
+                    io::ErrorKind::FileTooLarge,
+                    "request body exceeds the size limit",
+                ));
+            }
+            content_length = Some(length);
+        } else if name.eq_ignore_ascii_case("transfer-encoding") {
+            has_transfer_encoding = true;
         }
     }
+
+    if has_transfer_encoding {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Transfer-Encoding is not supported",
+        ));
+    }
+
+    let mut body = vec![0_u8; content_length.unwrap_or(0)];
+    reader.read_exact(&mut body)?;
 
     Ok(Request {
         method: method.expect("checked above").to_owned(),
         target: target.to_owned(),
         authorization,
+        content_type,
+        body,
     })
 }
 
@@ -337,6 +442,8 @@ mod tests {
             method: method.to_owned(),
             target: target.to_owned(),
             authorization: None,
+            content_type: None,
+            body: Vec::new(),
         }
     }
 

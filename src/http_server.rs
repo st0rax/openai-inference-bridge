@@ -8,9 +8,7 @@ use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::time::Duration;
 
 use crate::{
-    api_error::ApiError,
-    brain_registry::BrainRegistry,
-    chat_completion::normalize_request,
+    api_error::ApiError, brain_registry::BrainRegistry, chat_completion::normalize_request,
     config::Config,
 };
 
@@ -124,7 +122,7 @@ fn route(request: &Request, registry: &BrainRegistry) -> Response {
                 .with_param("model")
                 .with_code("brain_runtime_unavailable"),
             )
-        },
+        }
         (_, "/v1/models") => Response {
             allow: Some("GET"),
             ..Response::error(
@@ -367,7 +365,10 @@ fn read_request(reader: &mut impl Read) -> io::Result<Request> {
             }
             content_type = Some(value.to_owned());
         } else if name.eq_ignore_ascii_case("content-length") {
-            if content_length.is_some() || value.is_empty() || !value.bytes().all(|b| b.is_ascii_digit()) {
+            if content_length.is_some()
+                || value.is_empty()
+                || !value.bytes().all(|b| b.is_ascii_digit())
+            {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     "invalid Content-Length header",
@@ -493,7 +494,11 @@ mod tests {
 
         let configured_but_unavailable = route(&chat_request(body), &configured_registry());
         assert_eq!(configured_but_unavailable.status, 503);
-        assert!(configured_but_unavailable.body.contains("brain_runtime_unavailable"));
+        assert!(
+            configured_but_unavailable
+                .body
+                .contains("brain_runtime_unavailable")
+        );
     }
 
     #[test]

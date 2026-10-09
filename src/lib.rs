@@ -3,6 +3,7 @@
 //! The initial HTTP listener, model-list endpoint, and error envelope exist; Chat Completions and browser runtime are not implemented yet.
 
 pub mod api_error;
+pub mod brain_backend;
 pub mod brain_registry;
 pub mod chat_completion;
 pub mod config;

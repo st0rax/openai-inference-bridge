@@ -105,8 +105,9 @@ pub fn run(bind_addr: SocketAddr) -> io::Result<()> {
 fn handle_connection(stream: &mut TcpStream) -> io::Result<()> {
     let response = match read_request(stream) {
         Ok(request) => route(&request),
-        Err(error) if error.kind() == io::ErrorKind::TimedOut
-            || error.kind() == io::ErrorKind::WouldBlock =>
+        Err(error)
+            if error.kind() == io::ErrorKind::TimedOut
+                || error.kind() == io::ErrorKind::WouldBlock =>
         {
             Response::new(
                 408,

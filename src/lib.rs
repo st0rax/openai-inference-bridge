@@ -4,8 +4,10 @@
 
 pub mod api_error;
 pub mod brain_registry;
+pub mod chat_completion;
 pub mod config;
 pub mod http_server;
+pub mod json;
 
 /// Package version embedded at compile time.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

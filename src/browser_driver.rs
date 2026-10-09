@@ -63,8 +63,8 @@ impl BrowserCdpDriver {
             "--no-first-run",
             "--no-default-browser-check",
             "--disable-background-mode",
-            &port_arg,
-            &profile_arg,
+            port_arg.as_str(),
+            profile_arg.as_str(),
             "about:blank",
         ];
 
@@ -316,7 +316,7 @@ impl BrowserPageDriver for BrowserCdpDriver {
     }
 
     fn shutdown(&mut self, deadline: Instant) -> Result<(), BackendError> {
-        self.cdp.take();
+        drop(self.cdp.take());
         if let Some(child) = self.child.as_ref() {
             #[cfg(windows)]
             {
@@ -354,8 +354,8 @@ impl BrowserPageDriver for BrowserCdpDriver {
             thread::sleep(Duration::from_millis(25));
         }
 
-        self.child.take();
-        self._profile_lock.take();
+        drop(self.child.take());
+        drop(self._profile_lock.take());
         if let Some(path) = self.profile_lock_path.take() {
             match fs::remove_file(path) {
                 Ok(()) => {}

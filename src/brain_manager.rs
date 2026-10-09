@@ -77,11 +77,7 @@ impl BrainManager {
         receive(receiver, deadline, &poisoned)
     }
 
-    pub fn readiness(
-        &self,
-        brain_id: &str,
-        deadline: Instant,
-    ) -> Result<Readiness, BackendError> {
+    pub fn readiness(&self, brain_id: &str, deadline: Instant) -> Result<Readiness, BackendError> {
         let (sender, poisoned) = self.worker_for(brain_id)?;
         let (reply, receiver) = mpsc::sync_channel(1);
         sender
@@ -377,7 +373,10 @@ fn remaining(deadline: Instant) -> Result<Duration, BackendError> {
 }
 
 fn timeout_error() -> BackendError {
-    BackendError::new(BackendErrorKind::Timeout, "Brain operation deadline expired")
+    BackendError::new(
+        BackendErrorKind::Timeout,
+        "Brain operation deadline expired",
+    )
 }
 
 fn unavailable_error() -> BackendError {
@@ -505,8 +504,13 @@ mod tests {
         peak.store(0, Ordering::Release);
         let first = Arc::clone(&manager);
         let second = Arc::clone(&manager);
-        let one = thread::spawn(move || first.infer("chatgpt", request("one"), &mut |_| {}).unwrap());
-        let two = thread::spawn(move || second.infer("chatgpt", request("two"), &mut |_| {}).unwrap());
+        let one =
+            thread::spawn(move || first.infer("chatgpt", request("one"), &mut |_| {}).unwrap());
+        let two = thread::spawn(move || {
+            second
+                .infer("chatgpt", request("two"), &mut |_| {})
+                .unwrap()
+        });
         one.join().unwrap();
         two.join().unwrap();
         assert_eq!(peak.load(Ordering::Acquire), 1);
@@ -515,8 +519,10 @@ mod tests {
         *barrier.lock().unwrap() = Some(Arc::new(std::sync::Barrier::new(2)));
         let first = Arc::clone(&manager);
         let second = Arc::clone(&manager);
-        let one = thread::spawn(move || first.infer("chatgpt", request("one"), &mut |_| {}).unwrap());
-        let two = thread::spawn(move || second.infer("other", request("two"), &mut |_| {}).unwrap());
+        let one =
+            thread::spawn(move || first.infer("chatgpt", request("one"), &mut |_| {}).unwrap());
+        let two =
+            thread::spawn(move || second.infer("other", request("two"), &mut |_| {}).unwrap());
         one.join().unwrap();
         two.join().unwrap();
         assert_eq!(peak.load(Ordering::Acquire), 2);
@@ -601,6 +607,10 @@ mod tests {
         manager
             .shutdown("chatgpt", Instant::now() + Duration::from_secs(1))
             .unwrap();
-        assert!(manager.start("chatgpt", Instant::now() + Duration::from_secs(1)).is_ok());
+        assert!(
+            manager
+                .start("chatgpt", Instant::now() + Duration::from_secs(1))
+                .is_ok()
+        );
     }
 }

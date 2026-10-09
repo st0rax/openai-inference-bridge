@@ -36,8 +36,12 @@ A component is not approved until the record is reviewed and its decision is exp
 
 ## Gate before runtime implementation
 
-The next upstream-related task is **component-by-component evaluation**, not a dependency/build spike. No runtime code implementation or upstream code reuse starts until the evaluation records identify the minimum viable components and the project-specific Brain contract is defined.
+The initial browser-text path has been evaluated in [the component evaluation report](COMPONENT_EVALUATION_2026-10-09.md). The evaluation approves no WebAgent source for copying and no WebAgent crate dependency. Runtime implementation must start from project-owned interfaces. If a later task proposes a specific source snippet for reuse, it needs a narrower follow-up record before that code is written.
 
 ## Current status
 
-The repository-wide source audits and initial reuse matrix exist, but they were written under an earlier recommendation to use WebAgent's public API bridge. That recommendation is superseded. Existing audit documents remain useful as evidence; their integration recommendation must not be treated as approved. The individual component approval gate is still outstanding.
+- Repository-wide source audits: complete.
+- Initial browser-text component evaluation: complete for the listed candidates.
+- Approved WebAgent source reuse: none.
+- Build, tests and live browser integration: outstanding.
+- Transitive dependency license closure: outstanding.

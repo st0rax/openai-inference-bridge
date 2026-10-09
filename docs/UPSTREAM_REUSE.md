@@ -50,7 +50,8 @@ Keep agent controllers, TUI, shell executor, autonomous loops, local tool execut
 ## Current evidence status
 
 - Source-level discovery audits: complete.
-- Individual candidate component approval records: **not complete**.
+- Initial browser-text component evaluation: complete; see [report](COMPONENT_EVALUATION_2026-10-09.md).
+- Approved WebAgent source reuse: **none**.
 - Application code: not started.
 - Clean build, live browser turn, and client compatibility: not run from this repository.
 - Transitive dependency license review: outstanding.

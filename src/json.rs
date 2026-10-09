@@ -78,7 +78,9 @@ struct Parser<'a> {
 
 impl Parser<'_> {
     fn error(&self) -> JsonError {
-        JsonError { offset: self.offset }
+        JsonError {
+            offset: self.offset,
+        }
     }
 
     fn peek(&self) -> Option<u8> {
@@ -193,7 +195,8 @@ impl Parser<'_> {
                                 if !(0xdc00..=0xdfff).contains(&second) {
                                     return Err(self.error());
                                 }
-                                0x10000 + (((first - 0xd800) as u32) << 10)
+                                0x10000
+                                    + (((first - 0xd800) as u32) << 10)
                                     + (second - 0xdc00) as u32
                             } else if (0xdc00..=0xdfff).contains(&first) {
                                 return Err(self.error());
@@ -345,7 +348,10 @@ mod tests {
         let object = value.as_object().unwrap();
         assert_eq!(object["stream"].as_bool(), Some(false));
         assert_eq!(
-            object["messages"].as_array().unwrap()[0].as_object().unwrap()["content"].as_str(),
+            object["messages"].as_array().unwrap()[0]
+                .as_object()
+                .unwrap()["content"]
+                .as_str(),
             Some("hello 🚀")
         );
         assert_eq!(object["n"], JsonValue::Number("-1.25e2".to_owned()));
@@ -362,7 +368,11 @@ mod tests {
 
     #[test]
     fn enforces_nesting_limit() {
-        let nested = format!("{}0{}", "[".repeat(MAX_DEPTH + 2), "]".repeat(MAX_DEPTH + 2));
+        let nested = format!(
+            "{}0{}",
+            "[".repeat(MAX_DEPTH + 2),
+            "]".repeat(MAX_DEPTH + 2)
+        );
         assert!(parse(&nested).is_err());
     }
 }

@@ -1,20 +1,31 @@
-//! Minimal HTTP/1.x listener and route table.
+//! HTTP/1.x listener and OpenAI-compatible route table.
 //!
-//! Inference routes remain placeholders until their dedicated implementation tasks.
 //! The listener is loopback-only; remote transport security is not implemented.
 
 use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::time::Duration;
+use std::sync::{Arc, Mutex, mpsc};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use crate::{
-    api_error::ApiError, brain_registry::BrainRegistry, chat_completion::normalize_request,
+    api_error::ApiError,
+    brain_backend::{BackendError, BackendErrorKind, BrainBackend, BrowserPageDriver, CancellationToken, InferenceRequest, Readiness},
+    brain_manager::BrainManager,
+    brain_registry::BrainRegistry,
+    browser_driver::BrowserCdpDriver,
+    chat_completion::{completion_response_json, normalize_request},
     config::Config,
+    brain_backend::BrowserBrainBackend,
 };
 
 const MAX_HEADER_BYTES: usize = 16 * 1024;
 const MAX_BODY_BYTES: usize = 1024 * 1024;
 const READ_TIMEOUT: Duration = Duration::from_secs(5);
+const WRITE_TIMEOUT: Duration = Duration::from_secs(5);
+const HTTP_WORKERS: usize = 4;
+const MAX_PENDING_CONNECTIONS: usize = 32;
+const BRAIN_REQUEST_TIMEOUT: Duration = Duration::from_secs(120);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Request {
@@ -65,7 +76,7 @@ impl Response {
     }
 }
 
-fn route(request: &Request, registry: &BrainRegistry) -> Response {
+fn route(request: &Request, registry: &BrainRegistry, manager: &BrainManager) -> Response {
     match (request.method.as_str(), request.target.as_str()) {
         ("GET", "/v1/models") => Response::json(200, "OK", registry.models_json()),
         ("POST", "/v1/chat/completions") => {
@@ -112,16 +123,44 @@ fn route(request: &Request, registry: &BrainRegistry) -> Response {
                 );
             }
 
-            Response::api_error(
-                "Service Unavailable",
-                ApiError::new(
-                    503,
-                    "server_error",
-                    "The configured Brain has no execution backend yet",
-                )
-                .with_param("model")
-                .with_code("brain_runtime_unavailable"),
-            )
+            let brain_id = registry
+                .resolve_model_id(&normalized.model_id)
+                .expect("model was resolved above")
+                .id
+                .clone();
+            let model_id = normalized.model_id.clone();
+            let deadline = Instant::now() + BRAIN_REQUEST_TIMEOUT;
+
+            if let Err(error) = manager.start(&brain_id, deadline) {
+                let api_error = ApiError::from_backend(&error);
+                return Response::api_error(reason_for_status(api_error.status), api_error);
+            }
+
+            match manager.readiness(&brain_id, deadline) {
+                Ok(readiness) => {
+                    if let Some(api_error) = ApiError::from_readiness(readiness) {
+                        return Response::api_error(reason_for_status(api_error.status), api_error);
+                    }
+                }
+                Err(error) => {
+                    let api_error = ApiError::from_backend(&error);
+                    return Response::api_error(reason_for_status(api_error.status), api_error);
+                }
+            }
+
+            let inference = InferenceRequest {
+                prompt: normalized.compose_prompt(),
+                deadline,
+                cancellation: CancellationToken::default(),
+            };
+            let content = match manager.infer(&brain_id, inference, &mut |_| {}) {
+                Ok(content) => content,
+                Err(error) => {
+                    let api_error = ApiError::from_backend(&error);
+                    return Response::api_error(reason_for_status(api_error.status), api_error);
+                }
+            };
+            Response::json(200, "OK", completion_response_json(&model_id, &content))
         }
         (_, "/v1/models") => Response {
             allow: Some("GET"),
@@ -149,20 +188,57 @@ fn route(request: &Request, registry: &BrainRegistry) -> Response {
 /// when configuration opted in, because TLS and remote deployment hardening are absent.
 pub fn run(config: Config) -> io::Result<()> {
     validate_bind(config.bind_addr)?;
-    let registry = BrainRegistry::from_env(&config)
-        .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
+    let registry = Arc::new(
+        BrainRegistry::from_env(&config)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?,
+    );
+    let manager = Arc::new(BrainManager::new((*registry).clone(), |brain| {
+        let backend = BrowserBrainBackend::new(brain, BrowserCdpDriver::new())?;
+        Ok(Box::new(backend) as Box<dyn BrainBackend>)
+    }));
+    let token = Arc::new(config.api_token().to_owned());
     let listener = TcpListener::bind(config.bind_addr)?;
     eprintln!("HTTP listener bound to {}", listener.local_addr()?);
 
-    for incoming in listener.incoming() {
-        match incoming {
-            Ok(mut stream) => {
-                if let Err(error) = stream.set_read_timeout(Some(READ_TIMEOUT)) {
-                    eprintln!("failed to set HTTP read timeout: {error}");
+    let (sender, receiver) = mpsc::sync_channel::<TcpStream>(MAX_PENDING_CONNECTIONS);
+    let receiver = Arc::new(Mutex::new(receiver));
+    for worker_index in 0..HTTP_WORKERS {
+        let worker_receiver = Arc::clone(&receiver);
+        let worker_token = Arc::clone(&token);
+        let worker_registry = Arc::clone(&registry);
+        let worker_manager = Arc::clone(&manager);
+        thread::Builder::new()
+            .name(format!("oib-http-{worker_index}"))
+            .spawn(move || loop {
+                let incoming = match worker_receiver.lock() {
+                    Ok(receiver) => receiver.recv(),
+                    Err(_) => return,
+                };
+                let Ok(mut stream) = incoming else {
+                    break;
+                };
+                if stream.set_read_timeout(Some(READ_TIMEOUT)).is_err()
+                    || stream.set_write_timeout(Some(WRITE_TIMEOUT)).is_err()
+                {
                     continue;
                 }
-                if let Err(error) = handle_connection(&mut stream, config.api_token(), &registry) {
+                if let Err(error) = handle_connection(
+                    &mut stream,
+                    &worker_token,
+                    &worker_registry,
+                    &worker_manager,
+                ) {
                     eprintln!("HTTP connection ended: {error}");
+                }
+            })
+            .map_err(io::Error::other)?;
+    }
+
+    for incoming in listener.incoming() {
+        match incoming {
+            Ok(stream) => {
+                if sender.send(stream).is_err() {
+                    return Err(io::Error::other("HTTP worker pool stopped"));
                 }
             }
             Err(error) => eprintln!("HTTP accept failed: {error}"),
@@ -186,9 +262,10 @@ fn handle_connection(
     stream: &mut TcpStream,
     expected_token: &str,
     registry: &BrainRegistry,
+    manager: &BrainManager,
 ) -> io::Result<()> {
     let response = match read_request(stream) {
-        Ok(request) => dispatch(&request, expected_token, registry),
+        Ok(request) => dispatch(&request, expected_token, registry, manager),
         Err(error)
             if error.kind() == io::ErrorKind::TimedOut
                 || error.kind() == io::ErrorKind::WouldBlock =>
@@ -216,7 +293,7 @@ fn handle_connection(
     write_response(stream, &response)
 }
 
-fn dispatch(request: &Request, expected_token: &str, registry: &BrainRegistry) -> Response {
+fn dispatch(request: &Request, expected_token: &str, registry: &BrainRegistry, manager: &BrainManager) -> Response {
     if !is_authorized(request.authorization.as_deref(), expected_token) {
         return Response {
             www_authenticate: Some("Bearer"),
@@ -228,7 +305,21 @@ fn dispatch(request: &Request, expected_token: &str, registry: &BrainRegistry) -
             )
         };
     }
-    route(request, registry)
+    route(request, registry, manager)
+}
+
+fn reason_for_status(status: u16) -> &'static str {
+    match status {
+        400 => "Bad Request",
+        401 => "Unauthorized",
+        408 => "Request Timeout",
+        413 => "Payload Too Large",
+        429 => "Too Many Requests",
+        502 => "Bad Gateway",
+        503 => "Service Unavailable",
+        504 => "Gateway Timeout",
+        _ => "Internal Server Error",
+    }
 }
 
 fn is_authorized(header: Option<&str>, expected_token: &str) -> bool {

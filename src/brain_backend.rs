@@ -108,7 +108,7 @@ pub trait BrowserPageDriver: Send {
     fn shutdown(&mut self) -> Result<(), BackendError>;
 }
 
-pub trait BrainBackend {
+pub trait BrainBackend: Send {
     fn start(&mut self, deadline: Instant) -> Result<(), BackendError>;
     fn readiness(&mut self, deadline: Instant) -> Result<Readiness, BackendError>;
     fn infer(

@@ -372,8 +372,8 @@ mod tests {
         let unauthorized = dispatch(&request, TOKEN);
         assert_eq!(unauthorized.status, 401);
         assert_eq!(unauthorized.www_authenticate, Some("Bearer"));
-        assert!(unauthorized.body.contains("\\\"type\\\":\\\"authentication_error\\\""));
-        assert!(unauthorized.body.contains("\\\"param\\\":null,\\\"code\\\":null"));
+        assert!(unauthorized.body.contains("\"type\":\"authentication_error\""));
+        assert!(unauthorized.body.contains("\"param\":null,\"code\":null"));
 
         let mut authorized_request = request;
         authorized_request.authorization = Some(format!("Bearer {TOKEN}"));
